@@ -12,7 +12,7 @@ describe('POST /login - Log in account', () => {
             .post(url)
             .set('Content-Type', 'application/json')
             .set('Accept', 'application/json')
-            .send({"password": "tooFaitdukayak2!", "univID": "benpr438"})
+            .send({"password": "January0!", "univID": "priourb"})
             .expect('Content-Type', /json/)
             .expect(401, {errors:{password: "wrong password"}})
     })
@@ -32,9 +32,9 @@ describe('POST /login - Log in account', () => {
             .post(url)
             .set('Content-Type', 'application/json')
             .set('Accept', 'application/json')
-            .send({"password": "totoFaitdukayak2!", "univID": "benpr438"})
+            .send({"password": "January01!", "univID": "priourb"})
             .expect('Content-Type', /json/)
-            .expect(200, {univID: "benpr438"})
+            .expect(200, {univID: "priourb"})
             .expect((res) => {if (! ('set-cookie' in res.headers)) throw new Error('Missing set-cookie')})
           })
           
@@ -43,9 +43,9 @@ describe('POST /login - Log in account', () => {
             .post(url)
             .set('Content-Type', 'application/json')
             .set('Accept', 'application/json')
-            .send({"password": "totoFaitdukayak2!", "email": "benpr438@student.liu.se"})
+            .send({"password": "January01!", "email": "benpr@liu.se"})
             .expect('Content-Type', /json/)
-            .expect(200, {univID: "benpr438"})
+            .expect(200, {univID: "priourb"})
             .expect((res) => {if (! ('set-cookie' in res.headers)) throw new Error('Missing set-cookie')})
           })
 
@@ -54,9 +54,9 @@ describe('POST /login - Log in account', () => {
             .post(url)
             .set('Content-Type', 'application/json')
             .set('Accept', 'application/json')
-            .send({"password": "totoFaitdukayak2!", "email": "benpr438@student.liu.se", "univID": "benpr440"})
+            .send({"password": "January01!", "email": "benpr@liu.se", "univID": "benpr438"})
             .expect('Content-Type', /json/)
-            .expect(200, {univID: "benpr438"})
+            .expect(200, {univID: "priourb"})
             .expect((res) => {if (! ('set-cookie' in res.headers)) throw new Error('Missing set-cookie')})
     })
 
@@ -66,7 +66,7 @@ describe('POST /login - Log in account', () => {
                 .post(url)
                 .set('Content-Type', 'application/json')
                 .set('Accept', 'application/json')
-                .send({"password": "totoFaitdukayak2!"})
+                .send({"password": "January01!"})
                 .expect(400, {
                     errors: {
                       univID: {location: "body", msg: "invalid value"},
@@ -79,7 +79,7 @@ describe('POST /login - Log in account', () => {
                 .post(url)
                 .set('Content-Type', 'application/json')
                 .set('Accept', 'application/json')
-                .send({ "univID": "benpr438"})
+                .send({ "univID": "priourb"})
                 .expect(400, {
                     errors: {
                         password: {msg: "invalid value", location: "body"}
@@ -108,11 +108,11 @@ describe('POST / - Create account', () => {
 
     let payload = {
         "univID": "benpr438",
-        "password": "totoFaitdukayak2!",
+        "password": "January02!",
         "firstName": "toto",
         "lastName": "titi",
         "promo": 2024,
-        "email": "benpr438@student.liu.se"
+        "email": "benpr@liu.se"
         }
 
     test('user already exists - univID', async () => {

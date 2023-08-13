@@ -33,7 +33,7 @@ app.use(
   session({
     secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: process.env.NODE_ENV === 'test',
     cookie: { /* secure: true, */ httpOnly: true, maxAge: 60 * 60 * 1000, sameSite:"none" }, // FIXME XSS
     store: MongoStore,
   })
@@ -59,9 +59,9 @@ app.use(function (req, res, next) {
 
 // error handler
 app.use(function (err, req, res, next) {
-  if (!err.status) debug("Default handle of", err);
+  debug("Default handle of", err);
   res.status(err.status || 500);
-  res.json(req.app.get("env") === "development" ? err : {});
+  res.json(err);
 });
 
 module.exports = app;

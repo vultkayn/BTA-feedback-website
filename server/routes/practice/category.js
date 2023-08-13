@@ -1,18 +1,18 @@
-var express = require('express');
+var express = require("express");
 var router = express.Router();
 
-const catCtrl = require('../../controllers/categoryController');
-const {pathParamValidator} = require('../../controllers/validators').practice;
+const catCtrl = require("../../controllers/categoryController");
+const { URIParamValidator } = require("../../controllers/validators").practice;
 
-router.post('/', catCtrl.create);
-router.use('/:path', pathParamValidator);
-router.get('/:path', catCtrl.request);
-router.delete('/:path', catCtrl.delete);
-router.put('/:path', catCtrl.update);
+router.post("/", catCtrl.create);
+router.use("/:uri", URIParamValidator);
+router.get("/:uri", catCtrl.request);
+router.delete("/:uri", catCtrl.delete);
+router.put("/:uri", catCtrl.update);
 
-router.get('/:path/exercises', catCtrl.exercises);
-router.get('/:path/subcategories', catCtrl.subcategories);
+router.get("/:uri/exercises", catCtrl.exercises);
+router.get("/:uri/subcategories", catCtrl.subcategories);
 
-router.use('/:path/ex/', require('./exercise'));
+router.use("/:uri/ex/", require("./exercise"));
 
 module.exports = router;

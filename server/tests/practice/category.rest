@@ -1,0 +1,95 @@
+#### valid
+POST  http://127.0.0.1:8888/api/practice/category
+content-type: application/json
+Accept: application/json
+Cookie: connect.sid=s%3AyKSMNIrhdDLwF9avnGfehFN20PpyavlU.c6WIn3cEAkFuPyzXbd8Zuep%2BlUDAoj2PpS0Zogw0qF4;
+
+{
+"name": "Duper_Dummy-09 SuperTest++",
+"route": "dummyCategory_Parent",
+"description": "Just any other SuperTest category description"
+}
+#### unauthentified - error
+POST  http://127.0.0.1:8888/api/practice/category
+content-type: application/json
+Accept: application/json
+
+{
+"name": "Duper_Dummy-09 SuperTest++",
+"path": "dummyCategory_Parent",
+"description": "Just any other SuperTest category description"
+}
+
+#### empty name - error
+
+POST  http://127.0.0.1:8888/api/practice/category
+content-type: application/json
+Accept: application/json
+Cookie: connect.sid=s%3APHtOmTORVnhH5pbVO9lhAU7jMDSbGeCZ.%2FKEJIPrk6WjpKeELhyG4zv5J77S4ypluZhhTa8Njd%2B4;
+
+{
+"name": "",
+"path": "dummyCategory_Parent",
+"description": "Just any other SuperTest category description"
+}
+
+#### no path - error
+
+POST  http://127.0.0.1:8888/api/practice/category
+content-type: application/json
+Accept: application/json
+Cookie: connect.sid=s%3APHtOmTORVnhH5pbVO9lhAU7jMDSbGeCZ.%2FKEJIPrk6WjpKeELhyG4zv5J77S4ypluZhhTa8Njd%2B4;
+
+{
+"name": "Duper_Dummy-09 SuperTest++",
+"description": "Just any other SuperTest category description"
+}
+
+
+### invalid name - errror
+POST  http://127.0.0.1:8888/api/practice/category
+content-type: application/json
+Accept: application/json
+Cookie: connect.sid=s%3APHtOmTORVnhH5pbVO9lhAU7jMDSbGeCZ.%2FKEJIPrk6WjpKeELhyG4zv5J77S4ypluZhhTa8Njd%2B4;
+
+{
+"name": "isItvalid?",
+"path": "dummyCategory_Parent",
+"description": "Just any other SuperTest category description"
+}
+
+### invalid path
+POST  http://127.0.0.1:8888/api/practice/category
+content-type: application/json
+Accept: application/json
+Cookie: connect.sid=s%3APHtOmTORVnhH5pbVO9lhAU7jMDSbGeCZ.%2FKEJIPrk6WjpKeELhyG4zv5J77S4ypluZhhTa8Njd%2B4;
+
+{
+"name": "Duper_Dummy-09 SuperTest++",
+"path": "isItvalid.",
+"description": "Just any other SuperTest category description"
+}
+
+### name too long
+POST  http://127.0.0.1:8888/api/practice/category
+content-type: application/json
+Accept: application/json
+Cookie: connect.sid=s%3APHtOmTORVnhH5pbVO9lhAU7jMDSbGeCZ.%2FKEJIPrk6WjpKeELhyG4zv5J77S4ypluZhhTa8Njd%2B4;
+
+{
+"name": "abcdefghijklsmnopqerzIBIZEYACGNVVCJVFZEIRPYUZRY",
+"path": "dummyCategory_Parent",
+"description": "Just any other SuperTest category description"
+}
+
+### deletion unauthentified & nonexistent
+POST  http://127.0.0.1:8888/api/practice/category/
+content-type: application/json
+Accept: application/json
+Cookie: connect.sid=s%3AyKSMNIrhdDLwF9avnGfehFN20PpyavlU.c6WIn3cEAkFuPyzXbd8Zuep%2BlUDAoj2PpS0Zogw0qF4;
+
+{
+"name": "Duper_Dummy-09 SuperTest++",
+"route": "dummyCategory_Parent",
+"description": "Just any other SuperTest category description"
+}

@@ -1,32 +1,33 @@
-const { param, body } = require("express-validator");
-const { pathRegex } = require("../models/categoryModel");
+const { param } = require("express-validator");
+
+const {
+  routeRegex,
+  makeURIName,
+} = require("../models/helpers/practice");
 
 const practice = {
-  pathParamValidator: param("path")
+  URIParamValidator: param("uri")
     .escape()
     .notEmpty()
-    .custom((value) => pathRegex.test(value)),
+    .custom((value) => routeRegex.test(value)),
 
-  nameParamValidator: param("name")
+  nameParamValidator: param("uriName")
     .escape()
     .notEmpty()
-    .custom((value) => pathRegex.test(value)),
+    .custom((value) => routeRegex.test(value)),
 
   /**
-   *
-   * @param {String} uiName The name as given in the User Interface, i.e. without much validation and processing
-   * @returns uriName = String: A uri friendly formatted name, as could appear suffixed to relPath in a uri
+   * Middleware to validate that the given User Interface name, once formatted, matches the "name" component of the uri.
+   * @param {String} sep Separator used to distinguished the route and the name.
+   * @returns True if the given User Interface name "uiName", once formatted, matches the "name" component of the uri.
    */
-  uiName2uriName: function (uiName) {
-    const formatNameURI = (filteredName) => {
-      return filteredName
-        .replaceAll(/[^a-zA-Z0-9-+_ ]/g, "")
-        .replaceAll("-", "_")
-        .replaceAll(" ", "_");
+  nameMatchesURI_p: (getURIName = (req) => {}) => {
+    (uiName, { req }) => {
+      const uriName = getURIName(req);
+      if (uriName !== makeURIName(uiName))
+        throw new Error("ill-formed name does not match category uri");
+      return true;
     };
-
-    const pureName = uiName.replaceAll(/[^\w ._,+-]/g, "");
-    return formatNameURI(pureName);
   },
 
   questionChoicesCustomValidator: (choices, { req }) => {

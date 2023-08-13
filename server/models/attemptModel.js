@@ -39,4 +39,3 @@ AttemptSchema.virtual("solved").get(function () {
 });
 
 exports.Attempt = mongoose.model("Attempt", AttemptSchema);
-exports.titleRegex = mongoose.model("Attempt", AttemptSchema);

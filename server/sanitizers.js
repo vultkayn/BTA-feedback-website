@@ -1,9 +1,10 @@
+const debug = require("debug")("server:sanitizers");
 
-const customValidateSanitization = (validateResultFun) => {
+const _customValidateSanitization = (validateResultFun) => {
   return (req, res, next) => {
     let errors = validateResultFun(req);
-    
     if (!errors.isEmpty()) {
+      debug('validation errors', errors);
       let flattenedErr = {};
       errors.array({ onlyFirstError: true }).forEach((err) => {
         if (err.type == "alternative_grouped") {
@@ -31,10 +32,10 @@ const customValidateSanitization = (validateResultFun) => {
   };
 };
 
-exports.customValidateSanitization = customValidateSanitization;
+exports.customValidateSanitization = _customValidateSanitization;
 
 const { validationResult } = require("express-validator");
 exports.validateSanitization = (req, res, next) => {
-  return customValidateSanitization(validationResult)(req, res, next);
+  return _customValidateSanitization(validationResult)(req, res, next);
 };
 

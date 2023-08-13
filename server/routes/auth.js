@@ -21,7 +21,7 @@ router.post('/login', connexion, (err, req, res, next) => {
 router.get('/logout', (req, res, next) => {
   req.logout(function(err) {
     if (err) return next(err);
-    res.status(303).send('/');
+    res.status(200).send();
   });
 })
 

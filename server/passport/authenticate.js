@@ -10,7 +10,7 @@ const User = require('../models/userModel');
 function handleAccessFailure (err, req, res, next)
 {
   if (err && err.status == 401) {
-    return res.status(302).send('/account/login');
+    return res.status(401).send('/account/login');
   }
   else next(err.errors || err);
 }

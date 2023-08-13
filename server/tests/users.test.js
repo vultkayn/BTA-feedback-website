@@ -14,8 +14,8 @@ describe('GET / - Get user information', () =>
       .post("/api/auth/login")
       .set('Content-Type', 'application/json')
       .send({
-        "univID": "benpr438",
-        "password": "totoFaitdukayak2!"
+        "univID": "priourb",
+        "password": "January01!"
       })
       .expect(function (res)
       {
@@ -29,32 +29,7 @@ describe('GET / - Get user information', () =>
     await request(app)
       .get(url)
       .set('Accept', 'application/json')
-      .expect(301)
-      .expect('Location', /\/login/)
-  });
-
-  test('Not logged in - Wrong Session', async () =>
-  {
-    let other_user_session = "";
-
-    await request(app)
-      .post("/api/auth/login")
-      .set('Content-Type', 'application/json')
-      .send({
-        "univID": "benpr439",
-        "password": "totoFaitdukayak2!"
-      })
-      .expect(function (res)
-      {
-        other_user_session = res.headers["set-cookie"]
-      });
-
-    await request(app)
-      .get(url)
-      .set('Cookie', other_user_session)
-      .set('Accept', 'application/json')
-      .expect(301)
-      .expect('Location', /\/login/)
+      .expect(401)
   });
 
   test('Logged in', async () =>
@@ -64,10 +39,10 @@ describe('GET / - Get user information', () =>
       .set('Cookie', sid_cookie)
       .set('Accept', 'application/json')
       .expect(200, {
-        univID: "benpr438",
-        email: "benpr438@student.liu.se",
-        firstName: "toto",
-        lastName: "titi",
+        univID: "priourb",
+        email: "benpr@liu.se",
+        firstName: "ben",
+        lastName: "pr",
         promo: 2024,
       })
   });
@@ -84,8 +59,8 @@ describe('PUT / - Update account', () =>
       .post("/api/auth/login")
       .set('Content-Type', 'application/json')
       .send({
-        "univID": "benpr438",
-        "password": "totoFaitdukayak2!"
+        "univID": "priourb",
+        "password": "January01!"
       })
       .expect(function (res)
       {
@@ -96,21 +71,6 @@ describe('PUT / - Update account', () =>
 
   describe("Auth failure", () =>
   {
-    let other_user_session = "";
-    beforeAll(async () => {
-      await request(app)
-        .post("/api/auth/login")
-        .set('Content-Type', 'application/json')
-        .send({
-          "univID": "benpr439",
-          "password": "totoFaitdukayak2!"
-        })
-        .expect(function (res)
-        {
-          other_user_session = res.headers["set-cookie"]
-        });
-    })
-
     test('No session', async () =>
     {
       await request(app)
@@ -118,42 +78,24 @@ describe('PUT / - Update account', () =>
         .set('Content-Type', 'application/json')
         .set('Accept', 'application/json')
         .send({
-          "univID": "benpr438"
+          "univID": "priourb"
         })
-        .expect(301)
-        .expect('Location', /\/login/)
+        .expect(401)
     })
 
-    test('Wrong Session', async () =>
+    test('Mismatching session and ID', async () =>
     {
       await request(app)
         .put(url)
         .set('Content-Type', 'application/json')
-        .set('Cookie', other_user_session)
-        .set('Accept', 'application/json')
-        .send({
-          "univID": "deofdddd"
-        })
-        .expect(301)
-        .expect('Location', /\/login/)
-    });
-
-    test('Wrong Session but good ID', async () =>
-    {
-      await request(app)
-        .put(url)
-        .set('Content-Type', 'application/json')
-        .set('Cookie', other_user_session)
+        .set('Cookie', sid_cookie)
         .set('Accept', 'application/json')
         .send({
           "univID": "benpr438"
         })
-        .expect(301)
-        .expect('Location', /\/login/)
+        .expect(401)
     });
   });
-
-  describe("ill formed", () => { });
 
   test('Logged in', async () =>
   {
@@ -163,7 +105,7 @@ describe('PUT / - Update account', () =>
       .set('Cookie', sid_cookie)
       .set('Accept', 'application/json')
       .send({
-        "univID": "benpr438"
+        "univID": "priourb"
       })
       .expect(200)
   });

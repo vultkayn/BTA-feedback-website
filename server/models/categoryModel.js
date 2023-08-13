@@ -1,19 +1,23 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-const {Exercise, nameRegex} = require("./exerciseModel");
+const {Exercise} = require("./exerciseModel");
 
-const pathRegex = /[a-zA-Z0-9-_+]*/;
+const {
+  routeRegex,
+  nameRegex,
+  breakdownURI
+} = require("./helpers/practice");
 
 const CategorySchema = new Schema(
   {
-    relPath: {
+    route: {
       type: String,
       default: "",
       validate: {
         validator: function (v) {
-          return pathRegex.test(v);
+          return routeRegex.test(v);
         },
-        message: "Invalid format of the category path",
+        message: "Invalid format of the category route",
       },
       trim: true,
     },
@@ -33,7 +37,7 @@ const CategorySchema = new Schema(
       required: true,
       validate: {
         validator: (v) => {
-          return pathRegex.test(v);
+          return routeRegex.test(v);
         },
         message: "Invalid format of the uri name",
       },
@@ -45,45 +49,31 @@ const CategorySchema = new Schema(
   }
 );
 
-/**
- *
- * @param {String} uriPath The full path as given in the request uri.
- * @param {String} sep Separator used to distinguished the path and the name.
- * @returns The extracted relPath part of the uriPath, identical to the unique Schema identifier.
- */
-function getRelPathOfURIPath(uriPath, sep = "-") {
-  if (!uriPath) return uriPath;
-  const lastSepPos = uriPath.lastIndexOf(sep);
-  if (lastSepPos === -1) return "";
-  return uriPath.slice(0, lastSepPos);
+
+/****HELPERS****/
+
+
+
+function makeCategoryURI (route, uriName)
+{
+  if (route.length === 0)
+    return uriName;
+  return route + "-" + uriName;
 }
 
-/**
- *
- * @param {String} uriPath The full path as given in the request uri.
- * @param {String} sep Separator used to distinguished the path and the name.
- * @returns {relPath, uriName} The relative path as the unique identifier in the Schema, and the name part of the uri.
- */
-function splitURIPath(uriPath, sep = "-") {
-  const relPath = getRelPathOfURIPath(uriPath);
-  const uriName =
-    relPath.length === uriPath.length
-      ? uriPath
-      : uriPath.replace(relPath + sep, "");
-  return { relPath: relPath, uriName: uriName };
-}
+/************ VIRTUALS ********************/
+
+
 
 CategorySchema.virtual("kind").get(() => 0);
 CategorySchema.virtual("solved").get(() => true);
-CategorySchema.virtual("uriPath")
+CategorySchema.virtual("uri")
   .get(function () {
-    if (this.relPath.indexOf('-') === -1)
-      return this.uriName;
-    return this.relPath + "-" + this.uriName;
+    return makeCategoryURI (this.route, this.uriName);
   })
-  .set(function (uriPath) {
-    const { relPath, uriName } = splitURIPath(uriPath, "-");
-    this.relPath = relPath;
+  .set(function (uri) {
+    const { route, uriName } = breakdownURI(uri, "-");
+    this.route = route;
     this.uriName = uriName;
   });
 
@@ -92,15 +82,19 @@ CategorySchema.virtual("progress").get(function () {
   return [0, 50];
 });
 
-// CategorySchema.index({ relPath: 1, uriName: 1 });
-
 
 CategorySchema.pre('deleteOne', {document: true, query: false}, async function () {
   return await Exercise.deleteMany({category: this._id});
 });
 
 
+/**********EXPORTS********* */
+
 exports.Category = mongoose.model("Category", CategorySchema);
-exports.nameRegex = nameRegex;
-exports.pathRegex = pathRegex;
-exports.splitURIPath = splitURIPath;
+
+/****** DEBUG & TESTS PURPOSES **********/
+
+if ( process.env.NODE_ENV === 'test')
+{
+  exports.makeCategoryURI = makeCategoryURI;
+}
