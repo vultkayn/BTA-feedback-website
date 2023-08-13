@@ -1,15 +1,11 @@
 import React, { useState } from "react";
-import Form, {
-  ValidatedInput,
-  createFormData,
-  validators,
-} from "../components/Form";
+import Form, { ValidatedInput, validators } from "../components/Form";
 import { Link, useActionData, useNavigate } from "react-router-dom";
 import { Button, Box } from "@mui/material";
 import useAuth from "../bridge/AuthProvider";
 
 export function SignupPage() {
-  const auth = useAuth();
+  // const auth = useAuth();
   const [valids, setValids] = useState({
     univID: true,
     password: true,
@@ -19,23 +15,26 @@ export function SignupPage() {
     promo: true,
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    return auth.signup(createFormData(e));
-  };
 
-  const handleError = (err) => {
-    if (err.status == 401 && err.data.errors) {
-      setValids({
-        univID: !("univID" in err.data.errors),
-        password: !("password" in err.data.errors),
-        firstName: !("firstName" in err.data.errors),
-        lastName: !("lastName" in err.data.errors),
-        email: !("email" in err.data.errors),
-        promo: !("promo" in err.data.errors),
-      });
-    }
-  };
+  const err = useActionData();
+  if (err !== undefined)
+    // e.preventDefault();
+    // try {
+    //   const res = await auth.signup(new FormData(e.target));
+    //   console.debug("SignupPage response:", res);
+    // } catch (err) {
+      if (err.status == 401 && err.data.errors) {
+        setValids({
+          univID: !("univID" in err.data.errors),
+          password: !("password" in err.data.errors),
+          firstName: !("firstName" in err.data.errors),
+          lastName: !("lastName" in err.data.errors),
+          email: !("email" in err.data.errors),
+          promo: !("promo" in err.data.errors),
+        });
+      }
+    // }
+  // };
 
   return (
     <>
@@ -48,11 +47,10 @@ export function SignupPage() {
       </Button>
       <Form
         method='post'
-        reactForm={false}
+        reactForm={true}
         endpoint='/api/auth/'
         id='Signup-form'
-        onSubmit={handleSubmit}
-        onError={handleError}>
+        >
         <ValidatedInput
           label='UnivID:'
           name='univID'
@@ -110,26 +108,32 @@ export function SignupPage() {
 }
 
 export function LoginPage() {
+  // const navigate = useNavigate();
+  // const auth = useAuth();
   const [valids, setValids] = useState({
     univID: true,
     password: true,
   });
 
-  const logged = useAuth().logged();
-  const err = useActionData();
-  const navigate = useNavigate();
+  const err = useActionData ();
 
-  console.log("logged is", logged, "err are", err);
-  if (logged) navigate("/", { replace: true });
-
-  if (err !== undefined) {
-    if (err.status == 401 && err.data.errors !== undefined) {
-      setValids({
-        univID: !("univID" in err.data.errors),
-        password: !("password" in err.data.errors),
-      });
+  // const onSubmit = async (e) => {
+  //   e.preventDefault();
+  //   try {
+  //     const res = await auth.login(new FormData(e.target));
+  //     navigate("/home", { replace: true });
+  //   } catch (err) {
+    if (err !== undefined) {
+        console.error("LoginPage error:", err);
+        if (err.status == 401 && err.data.errors !== undefined) {
+          setValids({
+            univID: !("univID" in err.data.errors),
+            password: !("password" in err.data.errors),
+          });
+        }
+      // }
     }
-  }
+  // };
 
   return (
     <Box

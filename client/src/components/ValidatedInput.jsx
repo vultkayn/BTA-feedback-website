@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import "./styles/Form.css";
-import Debug from "debug";
-const debug = Debug("component:ValidatedInput");
 import { TextField } from "@mui/material";
 
 export default function ValidatedInput({
@@ -53,27 +51,28 @@ export default function ValidatedInput({
 
 const passwordStrengthValidator = (name, value, setMsg) => {
   let passwordSymbolsClass = "%/_+&!:-(){}.?";
-  if (value.match(/[A-Z]/).length < 1) {
+  const pwd = value ?? "";
+  if (pwd.length < 8) {
     setMsg("Must be longer than 8 characters");
     return false;
   }
-  if (value.match(/[A-Z]/).length < 1) {
+  if (! /[A-Z]/.test (pwd)) {
     setMsg("Must contain at least one uppercase");
     return false;
   }
-  if (value.match(/[a-z]/).length < 1) {
+  if (! /[a-z]/.test (pwd)) {
     setMsg("Must contain at least one lowercase");
     return false;
   }
-  if (value.match(/[0-9]/).length < 1) {
+  if (! /[0-9]/.test (pwd)) {
     setMsg("Must contain at least one number");
     return false;
   }
-  if (value.match(/[%/_+&!:\-.?]/).length < 1) {
+  if (! /[%/_+&!:\-.?]/.test (pwd)) {
     setMsg(`Must contain at least one of ${passwordSymbolsClass}`);
     return false;
   }
-  if (!/[A-Za-z0-9%/_+&!:\-.?]{8,}/.test(value)) {
+  if (!/[A-Za-z0-9%/_+&!:\-.?]{8,}/.test (pwd)) {
     setMsg("Contains invalid characters.");
     return false;
   }

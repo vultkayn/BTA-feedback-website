@@ -1,17 +1,9 @@
-import React, { useContext } from "react";
+import React from "react";
 import "./styles/Form.css";
-import Debug from "debug";
-const debug = Debug("component:Form");
-import useAuth from "../bridge/AuthProvider";
-import axios from "axios";
+
 import { Form as ReactForm } from "react-router-dom";
 
 // validator shall return false if there IS any issue
-
-export function createFormData(e) {
-  const form = e.target;
-  return new FormData(form);
-}
 
 const FormBaseProps = {
   method: "post",
@@ -28,69 +20,42 @@ export default function FormBase({
   method,
   endpoint,
   children,
+  apiClient,
   reactForm = false,
   onChange = (e) => {},
   onSubmit = null,
-  onError = null,
-  toApi = true,
+  FormBaseProps
 }) {
-  const auth = useAuth();
 
   if (reactForm)
     return (
       <ReactForm
         method={method}
-        onChange={onChange}>
+        onChange={onChange}
+        {...FormBaseProps}>
         {children}
       </ReactForm>
     );
 
-  const defaultErrorHandler = (err) => {
-    console.error("err:", err);
-    switch (err.status) {
-      case 400: // ill formed request
-        console.error("Ill formed request");
-        break;
-      case 401: // Unauthorized
-        console.error("Unauthorized");
-        break;
-      default:
-        break;
-    }
-    throw err;
-  };
-
-  const defaultSubmitHandler = async (e) => {
-    e.preventDefault();
-    const formData = createFormData(e);
-    debug("Form submitted to", endpoint);
-    const requester = toApi ? auth.send : axios.request;
-
-    const response = await requester({
-      method: method,
-      url: endpoint,
-      data: formData,
-    });
-    console.log(response);
-    return response;
-  };
-
-  const handleSubmit = (submitHandler, errHandler) => async (e) => {
+  const handleSubmit = onSubmit ?? (async (e) => {
     try {
-      const response = await submitHandler(e);
-      console.log("response is", response);
+      e.preventDefault();
+      const request = {
+        method: method,
+        url: endpoint,
+        data: () => new FormData(e.target)
+      }
+      const response = await apiClient.request(request);
+      console.debug("Form response is", response);
     } catch (err) {
-      errHandler(err);
+      return Promise.reject(err);
     }
-  };
+  });
 
   return (
     <form
       onChange={onChange}
-      onSubmit={handleSubmit(
-        onSubmit || defaultSubmitHandler,
-        onError || defaultErrorHandler
-      )}>
+      onSubmit={handleSubmit}>
       {children}
     </form>
   );

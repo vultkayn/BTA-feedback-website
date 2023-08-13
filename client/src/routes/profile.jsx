@@ -106,8 +106,8 @@ function ProfileForm({ user, errors, editing = false, onEdit = (e) => {} }) {
   return <div>{inputs}</div>;
 }
 
-export function ProfilePage() {
-  const user = useLoaderData();
+export function ProfilePage () {
+  const user = useLoaderData ();
 
   return (
     <>

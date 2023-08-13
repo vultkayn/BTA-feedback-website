@@ -4,24 +4,30 @@ import axios from "axios";
 import { Container, Skeleton, Typography, Grid } from "@mui/material";
 import DOMPurify from "dompurify";
 
-export default function MarkdownReader({ path }) {
+export default function MarkdownReader({ name }) {
   const [done, setDone] = useState(false);
   const [file, setFile] = useState(null);
-  let html = path.substring(0, path.lastIndexOf(".")) + ".html";
+  let html = '/pages/' + name + ".html";
 
   useEffect(() => {
     async function parse() {
-      const fil = await axios.get(html);
-      const purified = await DOMPurify.sanitize(fil.data);
-      setDone(true);
-      setFile(purified); // FIXME improve with a steam (see axios responseType="stream")
+      try
+      {
+        const fil = await axios.get(html);
+        const purified = await DOMPurify.sanitize(fil.data);
+        setDone(true);
+        setFile(purified); // FIXME improve with a steam (see axios responseType="stream")
+      }
+      catch (err) {
+        console.error ("MarkdownReader failed to get", html);
+      }
     }
     parse();
     return () => {
       setFile(null);
       setDone(false);
     };
-  }, [path]);
+  }, [name]);
 
   if (done === false)
     return (

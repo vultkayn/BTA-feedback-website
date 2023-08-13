@@ -2,28 +2,28 @@ import React, { useState } from "react";
 import Form, { ValidatedInput, validators } from "../components/Form";
 
 import { Box, Button, TextareaAutosize } from "@mui/material";
-import { preparePathForServer } from "./practice";
+import { prepareRouteForServer } from "./practice";
 import { redirect, useActionData } from "react-router-dom";
 
-export const action = (authContext) =>
+export const action = ({apiClient}) =>
   async function ({ request }) {
     try {
       const formData = await request.formData();
       let catData = Object.fromEntries(formData);
       catData.kind = 0;
-      catData.path = preparePathForServer({
-        path: catData.path,
+      catData.uri = prepareRouteForServer({
+        uri: catData.uri,
         name: catData.name,
         kind: catData.kind,
-      }).relPath;
-      await authContext.send({
+      }).route;
+      await apiClient.request({
         method: "post",
         url: "/api/practice/category",
         data: catData,
       });
-      return redirect(`/practice/${catData.path}`);
+      return redirect(`/practice/${catData.uri}`);
     } catch (error) {
-      // debug("client:practice")("CategoryCreation failed with", error);
+      console.debug("CategoryCreation failed with", error);
       return error.response;
     }
   };
@@ -41,7 +41,7 @@ export default function CategoryCreationForm() {
       setValids({
         name: !("name" in err.data.errors),
         description: !("description" in err.data.errors),
-        path: !("description" in err.data.errors),
+        route: !("route" in err.data.errors),
       });
     }
   }
@@ -79,11 +79,11 @@ export default function CategoryCreationForm() {
           valid={valids.description}
         />
         <ValidatedInput
-          label='Path:'
-          name='path'
-          validator={validators.length(0, 40)} // FIXME add path validator
+          label='Route:'
+          name='route'
+          validator={validators.length(0, 40)} // FIXME add route validator
           margin='normal'
-          valid={valids.path}
+          valid={valids.route}
           required
         />
       </Box>

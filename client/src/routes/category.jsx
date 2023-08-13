@@ -2,30 +2,30 @@ import { Typography, Box, Button } from "@mui/material";
 import React, { useEffect } from "react";
 import { useOutletContext, useLoaderData, Link } from "react-router-dom";
 
-export function CategoryIndexLoader(auth) {
+export function CategoryIndexLoader({apiClient}) {
   return async () => {
-    const res = await auth.send({
+    const res = await apiClient.request({
       method: "get",
       url: `/api/practice/categories`,
     });
-    console.log("res:", res);
-    return res?.data ?? null;
+    console.debug("CategoryIndexLoader response:", res);
+    return res.data;
   };
 }
 
-export function CategoryLoader(auth) {
+export function CategoryLoader({apiClient}) {
   return async ({ params }) => {
     const uri = params.uri;
-    console.log("uri is", uri);
+    console.debug ("CategoryLoader uri is", uri);
     if (!uri || uri.length == 0) {
       // FIXME might drop that, should work both case
-      const res = await auth.send({
+      const res = await apiClient.request({
         method: "get",
         url: `/api/practice/categories`,
       }).data;
       return res;
     }
-    const res = await auth.send({
+    const res = await apiClient.request({
       method: "get",
       url: `/api/practice/category/${uri}`,
     });
@@ -37,81 +37,83 @@ export default function CategoryPage() {
   const [setBreadcrumbs, setSections, setCurrent] = useOutletContext();
   // const uiPath = useLocation().pathname.replace("/practice/", "");
 
-  const details = useLoaderData();
-  const path = details?.path ?? "";
+  const details = useLoaderData ();
+  const route = details?.route ?? "";
 
-  console.log("details are", details);
+  console.debug ("Category details are", details);
 
   /*   const sectionsDummy = [
     {
       title: "Exercises",
       listing: [
         {
-          path: "memory-pointers/exo1",
+          uri: "memory-pointers/exo1",
           name: "Exercise 1",
           solved: false,
           kind: 1,
         },
         {
-          path: "memory-pointers/exercise-2",
+          uri: "memory-pointers/exercise-2",
           name: "Exercise 2",
           solved: true,
           kind: 1,
         },
-        { path: "pointers/exo3", name: "exo3", solved: false, kind: 1 },
-        { path: "memory/exo4", name: "exo4", solved: true, kind: 1 },
-        { path: "c++/exo12", name: "exo12", solved: false, kind: 1 },
-        { path: "memory/exercise5", name: "exercise5", solved: false, kind: 1 },
-        { path: "memory/exo5", name: "exo5", solved: false, kind: 1 },
+        { uri: "pointers/exo3", name: "exo3", solved: false, kind: 1 },
+        { uri: "memory/exo4", name: "exo4", solved: true, kind: 1 },
+        { uri: "c++/exo12", name: "exo12", solved: false, kind: 1 },
+        { uri: "memory/exercise5", name: "exercise5", solved: false, kind: 1 },
+        { uri: "memory/exo5", name: "exo5", solved: false, kind: 1 },
         {
-          path: "garbage_collector/exo46",
+          uri: "garbage_collector/exo46",
           name: "exo46",
           solved: false,
           kind: 1,
         },
-        { path: "oop/exo6", name: "exo6", solved: false, kind: 1 },
+        { uri: "oop/exo6", name: "exo6", solved: false, kind: 1 },
       ],
     },
     {
       title: "Subcategories",
       listing: [
-        { path: "pointers", name: "pointers", solved: false, kind: 0 }, // FIXME path should include name too, fix above in the functions too
-        { path: "memory", name: "memory", solved: false, kind: 0 },
-        { path: "oop", name: "oop", solved: true, kind: 0 },
+        { uri: "pointers", name: "pointers", solved: false, kind: 0 }, // FIXME uri should include name too, fix above in the functions too
+        { uri: "memory", name: "memory", solved: false, kind: 0 },
+        { uri: "oop", name: "oop", solved: true, kind: 0 },
         {
-          path: "garbage_collector",
+          uri: "garbage_collector",
           name: "garbage collector",
           solved: false,
           kind: 0,
         },
-        { path: "c", name: "c", solved: false, kind: 0 },
-        { path: "c++", name: "c++", solved: false, kind: 0 },
-        { path: "c++-types", name: "types", solved: true, kind: 0 },
-        { path: "pointers", name: "pointers", solved: false, kind: 0 },
-        { path: "memory", name: "memory", solved: false, kind: 0 },
-        { path: "oop", name: "oop", solved: false, kind: 0 },
+        { uri: "c", name: "c", solved: false, kind: 0 },
+        { uri: "c++", name: "c++", solved: false, kind: 0 },
+        { uri: "c++-types", name: "types", solved: true, kind: 0 },
+        { uri: "pointers", name: "pointers", solved: false, kind: 0 },
+        { uri: "memory", name: "memory", solved: false, kind: 0 },
+        { uri: "oop", name: "oop", solved: false, kind: 0 },
         {
-          path: "garbage_collector",
+          uri: "garbage_collector",
           name: "garbage collector",
           solved: false,
           kind: 0,
         },
-        { path: "c2", name: "c", solved: false, kind: 0 },
-        { path: "c++2", name: "c++", solved: false, kind: 0 },
-        { path: "types2", name: "types", solved: false, kind: 0 },
+        { uri: "c2", name: "c", solved: false, kind: 0 },
+        { uri: "c++2", name: "c++", solved: false, kind: 0 },
+        { uri: "types2", name: "types", solved: false, kind: 0 },
       ],
     },
   ]; */
 
   useEffect(() => {
+    console.debug ("CategoryPage: Within useEffect", details);
     setSections(details?.sections ?? []);
-    setBreadcrumbs(path.endsWith("/") ? path.slice(0, -1) : path);
+    setBreadcrumbs(uri.endsWith("/") ? uri.slice(0, -1) : uri);
     setCurrent({
-      path: path,
+      route: route,
       kind: 0, // FIXME
       name: details?.name ?? "",
       description: details?.description ?? "",
     });
+
   }, [details]);
 
   if (details === null) return null;

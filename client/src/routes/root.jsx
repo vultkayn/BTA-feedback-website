@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import Scaffold from "../components/Scaffold";
+import React from "react";
+import { Outlet } from "react-router-dom";
 import { AppBar, Toolbar, Typography, Button } from "@mui/material";
 import { NavLink } from "react-router-dom";
 import ProfileMenu from "../components/ProfileMenu";
@@ -40,71 +40,66 @@ const TABS = [
 ];
 
 export default function Root() {
-  const auth = useAuth(); // useContext(AuthenticationContext)
-  const [logged, setLogged] = useState(null);
-  useEffect(() => {
-    async function pingUser() {
-      await auth.get();
-      setLogged(auth.logged());
-    }
-    pingUser();
-    return () => {};
-  }, []); // first time only
-
-  if (logged == null) return null;
-
-  console.log("Root: logged is", auth.logged());
-
+  const {identity, isLogged} = useAuth();
+  const loggedIn = isLogged(identity);
   let tabs = TABS.filter(
     (tab) =>
-      (tab.authRequired && auth.logged()) ||
-      (!tab.authRequired && !auth.logged()) ||
-      (!tab.authRequired && auth.logged() && !tab.authStrict)
+      (tab.authRequired && loggedIn) ||
+      (!tab.authRequired && !loggedIn) ||
+      (!tab.authRequired && loggedIn && !tab.authStrict)
   );
 
-  let appbar = (
-    <AppBar
-      position='static'
-      color='primary'
-      sx={{
-        mb: 2,
-      }}>
-      <Toolbar>
-        <NavLink to='/'>
-          <Typography
-            variant='h4'
-            component='div'
-            textDecoration='none'>
-            BTA
-          </Typography>
-        </NavLink>
+  console.debug ("Rendering Root");
 
-        <Navbar
-          textColor='inherit'
-          indicatorColor='white'
-          BoxProps={{
-            sx: {
-              width: "100%",
-            },
-          }}
-          tabs={tabs}
-          centered
-        />
+  return (
+    <div id='scaffold'>
+      <div id='scaffold-header'>
+        <AppBar
+          position='static'
+          color='primary'
+          sx={{
+            mb: 2,
+          }}>
+          <Toolbar>
+            <NavLink to='/'>
+              <Typography
+                variant='h4'
+                component='div'
+                textDecoration='none'>
+                BTA
+              </Typography>
+            </NavLink>
 
-        {auth.logged() ? (
-          <ProfileMenu />
-        ) : (
-          <Button
-            color='inherit'
-            height='minHeight'
-            component={NavLink}
-            to='/account/login'>
-            Login
-          </Button>
-        )}
-      </Toolbar>
-    </AppBar>
+            <Navbar
+              textColor='inherit'
+              indicatorColor='white'
+              BoxProps={{
+                sx: {
+                  width: "100%",
+                },
+              }}
+              tabs={tabs}
+              centered
+            />
+
+            {loggedIn ? (
+              <ProfileMenu />
+            ) : (
+              <Button
+                color='inherit'
+                height='minHeight'
+                component={NavLink}
+                to='/account/login'>
+                Login
+              </Button>
+            )}
+          </Toolbar>
+        </AppBar>
+      </div>
+
+      <div id='scaffold-main'>
+        <Outlet />
+      </div>
+    </div>
   );
-
-  return <Scaffold header={appbar} />;
 }

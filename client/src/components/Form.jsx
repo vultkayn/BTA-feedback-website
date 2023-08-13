@@ -14,6 +14,7 @@ export default function Form({
   toApi = true,
   sx = {},
   BoxProps,
+  FormBaseProps
 }) {
   const boxProps = {
     display: "flex",
@@ -32,6 +33,7 @@ export default function Form({
       onError={onError}
       toApi={toApi}
       reactForm={reactForm}
+      FormBaseProps={FormBaseProps}
       onChange={onChange}
       endpoint={endpoint}
       method={method}
@@ -42,6 +44,5 @@ export default function Form({
   );
 }
 
-export { createFormData } from "./FormBase";
 export { default as ValidatedInput, validators } from "./ValidatedInput";
 export { FormBase }

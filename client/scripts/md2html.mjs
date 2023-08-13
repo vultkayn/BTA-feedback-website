@@ -21,12 +21,12 @@ async function parse() {
     .use(remarkParse)
     .use(remarkRehype)
     .use(rehypeStringify)
-    .process(await read("public/pages/" + p));
+    .process(await read("public/docs/" + p));
 
 
-  fs.writeFile("public/pages/" + output, String(file), function (err) {
+  fs.writeFile("public/docs/" + output, String(file), function (err) {
     if (err) {
-      return console.log(err);
+      return console.error(err);
     }
     console.log("The file was saved!");
   });

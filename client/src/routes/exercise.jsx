@@ -67,13 +67,13 @@ function QuestionCard({ question, index }) {
 
 export default function ExercisePage() {
   const details = useLoaderData();
-  const path = details?.path ?? "";
+  const route = details?.route ?? "";
 
-  console.log("details are", details);
+  console.log("Exercice details are", details);
 
 /*   const details = {
     kind: 1, // 0 for catgs, 1 for exercises
-    path: "memory-pointers/", // object path, from root supercategory /.
+    route: "memory-pointers/", // object route, from root supercategory /.
     solved: false,
     progress: 4
     ,

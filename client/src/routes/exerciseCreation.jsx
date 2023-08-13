@@ -9,26 +9,25 @@ import {
   TextareaAutosize,
   Card,
   CardContent,
-  Typography,
 } from "@mui/material";
 import { redirect, useActionData } from "react-router-dom";
 
-export const action = (authContext) =>
+export const action = ({apiClient}) =>
   async function ({ request, params }) {
     try {
       const formData = await request.formData();
       let exoData = Object.fromEntries(formData);
       exoData.kind = 1;
 
-      const path = params.uri;
-      await authContext.send({
+      const uri = params.uri;
+      await apiClient.request({
         method: "post",
-        url: `/api/practice/category/${path}`,
+        url: `/api/practice/category/${uri}`,
         data: exoData,
       });
-      return redirect(`/practice/${path}`);
+      return redirect(`/practice/${uri}`);
     } catch (error) {
-      // debug("client:practice")("ExerciseCreation failed with", error);
+      //  console.debug("client:practice")("ExerciseCreation failed with", error);
       return error.response;
     }
   };
@@ -107,7 +106,7 @@ export default function ExerciseCreationForm() {
       setValids({
         name: !("name" in err.data.errors),
         description: !("description" in err.data.errors),
-        path: !("description" in err.data.errors),
+        route: !("route" in err.data.errors),
       });
     }
   }

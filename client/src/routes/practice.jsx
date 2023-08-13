@@ -7,27 +7,27 @@ import { Box, Breadcrumbs, Typography, Link as MUILink } from "@mui/material";
 
 /**
  * @brief Upon creation of an exercise or category,
- * use the user-friendly formatted path and name to produce a database friendly
- * path and name.
+ * use the user-friendly formatted route and name to produce a database friendly
+ * route and name.
  *
- * @param {string} path path at the format cat1/cat2/.../
+ * @param {string} route route at the format cat1/cat2/.../
  * @param {int} kind 0 for a category, 1 for an exercise
  */
-export function preparePathForServer({ path, name, kind }) {
-  const formatPath = (path) => {
-    const pathBeg = path && path.length > 0 && path[0] === "/" ? 1 : 0;
-    const pathEnd = // remove ending separator if any.
-      path && path.length > 1 && path.endsWith("/")
-        ? path.length - 1
-        : path.length;
-    return path
-      .slice(pathBeg, pathEnd)
+export function prepareRouteForServer({ route, name, kind }) {
+  const formatRoute = (route) => {
+    const routeBeg = route && route.length > 0 && route[0] === "/" ? 1 : 0;
+    const routeEnd = // remove ending separator if any.
+      route && route.length > 1 && route.endsWith("/")
+        ? route.length - 1
+        : route.length;
+    return route
+      .slice(routeBeg, routeEnd)
       .replaceAll(/[^a-zA-Z0-9-+_/]/g, "")
       .replaceAll("-", "_")
       .replaceAll("/", "-");
   };
 
-  const formatNameURI = (filteredName) => {
+  const makeURIName = (filteredName) => {
     return filteredName
       .replaceAll(/[^a-zA-Z0-9-+_ ]/g, "")
       .replaceAll("-", "_")
@@ -35,15 +35,25 @@ export function preparePathForServer({ path, name, kind }) {
   };
 
   const pureName = name.toLowerCase().replaceAll(/[^\w ._,+-]/g, "");
-  const pureNameURI = formatNameURI(pureName);
-  const uri = formatPath(path.toLowerCase());
+  const pureNameURI = makeURIName(pureName);
+  const route = formatRoute(route.toLowerCase());
 
   let sep = null;
-  if (kind === 0) sep = uri.length === 0 /* root? */ ? "" : "-";
-  else if (kind === 1) sep = uri.length === 0 /* root? */ ? null : "/"; // no exercises allowed for root, so cannot have empty here
-  if (sep === null) sep = ""; //throw new Error(""); // TODO improved the error type
+  if (kind === 0) sep = route.length === 0 /* root? */ ? "" : "-";
+  else if (kind === 1) sep = route.length === 0 /* root? */ ? null : "/"; // no exercises allowed for root, so cannot have empty here
+  if (sep === null) sep = ""; //throw new Error(""); // TODO improve the error type
 
-  return { target: uri + sep + pureNameURI, relPath: uri, uiName: pureName };
+  return { target: route + sep + pureNameURI, route: route, uiName: pureName };
+}
+
+function isExercisesSection (section)
+{
+  return section && section.title === "Exercises";
+}
+
+function isCategoriesSection (section)
+{
+  return section && section.title === "Subcategories";
 }
 
 export default function CategoriesListingPage() {
@@ -54,28 +64,28 @@ export default function CategoriesListingPage() {
   /*     {
       title: "Subcategories",
       listing: [
-        { path: "pointers", name: "pointers", solved: false, kind: 0 }, // FIXME path should include name too, fix above in the functions too
-        { path: "memory", name: "memory", solved: false, kind: 0 },
-        { path: "oop", name: "oop", solved: false, kind: 0 },
+        { uri: "pointers", name: "pointers", solved: false, kind: 0 }, // FIXME uri should include name too, fix above in the functions too
+        { uri: "memory", name: "memory", solved: false, kind: 0 },
+        { uri: "oop", name: "oop", solved: false, kind: 0 },
         {
-          path: "garbage_collector",
+          uri: "garbage_collector",
           name: "garbage collector",
           solved: false,
           kind: 0,
         },
-        { path: "c", name: "c", solved: false, kind: 0 },
-        { path: "c++", name: "c++", solved: false, kind: 0 },
-        { path: "types", name: "types", solved: true, kind: 0 },
+        { uri: "c", name: "c", solved: false, kind: 0 },
+        { uri: "c++", name: "c++", solved: false, kind: 0 },
+        { uri: "types", name: "types", solved: true, kind: 0 },
       ],
     },
   ]); */
 
-  console.log("sections are", sections);
+  console.log("Category sections are", sections);
   if (sections.length === 0)
     setSections([{ title: "Subcategories", listing: [] }]);
-  if (!isIndex && sections.length === 1 && sections[0].title !== "Exercises")
+  if (!isIndex && sections.length === 1 && ! isExercisesSection (sections[0]))
     setSections([sections[0], { title: "Exercises", listing: [] }]);
-  if (sections.length === 1 && sections[0].title !== "Subcategories")
+  if (sections.length === 1 && ! isCategoriesSection (sections[0]))
     setSections([sections[0], { title: "Subcategories", listing: [] }]);
 
   return (
@@ -96,10 +106,10 @@ export default function CategoriesListingPage() {
                 content={section.listing}
                 title={section.title}
                 makeIcon={makeSolvedIcon}
-                makeTarget={(v) => v.path}
+                makeTarget={(v) => v.uri}
                 inset
                 canAdd={!isIndex}
-                addTarget={section.title === "Subcategories" ? "/practice/@new" : `/practice/${current.path}/@new`}
+                addTarget={section.title === "Subcategories" ? "/practice/@new" : `/practice/${current.uri}/@new`}
               />
             );
           })}
@@ -122,7 +132,7 @@ export default function CategoriesListingPage() {
               Index
             </MUILink>
             {(() => {
-              let path = "/practice/";
+              let uri = "/practice/";
               const crumbs = breadcrumbs.split("-");
               return crumbs.length == 0 ||
                 (crumbs.length == 1 && crumbs[0] === "")
@@ -130,7 +140,7 @@ export default function CategoriesListingPage() {
                 : crumbs.map((crumb, idx) => {
                     let crumbHint = crumb.replace("_", " ");
                     crumbHint = crumbHint[0].toUpperCase() + crumbHint.slice(1);
-                    path += (idx !== 0 ? "-" : "") + crumb;
+                    uri += (idx !== 0 ? "-" : "") + crumb;
                     if (idx < crumbs.length - 1) {
                       return (
                         <MUILink
@@ -138,7 +148,7 @@ export default function CategoriesListingPage() {
                           underline='hover'
                           color='inherit'
                           component={RouterLink}
-                          to={`${path}`}>
+                          to={`${uri}`}>
                           {crumbHint}
                         </MUILink>
                       );

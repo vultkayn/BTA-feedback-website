@@ -6,8 +6,6 @@ import { Typography, Box } from "@mui/material";
 
 export default function ErrorPage() {
   const error = useRouteError();
-  // console.error("error is", error);
-  console.log("tried render error page");
 
   if (isRouteErrorResponse(error)) {
     return (

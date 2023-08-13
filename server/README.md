@@ -5,7 +5,7 @@ Any request from the end-user to an URI prefixed by `/api` is to be handled by t
 
 *Authentification is no longer ensured by JWT but by a session*
 
-## `/users` 
+## `/users`
 
 ### `POST`: Create a new user.
 
