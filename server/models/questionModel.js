@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
-const titleRegex = /[\w ?^.{}[\]_,+-]{1,60}/;
+const { titleRegex } = require("./helpers/practice");
 
 const QuestionSchema = new Schema({
   title: {
@@ -16,32 +16,35 @@ const QuestionSchema = new Schema({
       message: "Invalid format of the title",
     },
   },
-  statement: { type: String, required: true },
-  language: String,
-  languageContent: String,
-  explanation: String,
+  statement: {
+    type: String,
+    required: true,
+    minLength: [1, "Cannot have an empty statement"],
+    maxLength: [255, "Statement too long"],
+  },
+  explanation: { required: true, type: String, maxLength: 255 },
+  language: {
+    type: String,
+    enum: ["", "cpp", "c", "java", "bta", "javascript", "python"],
+    lowercase: true,
+  },
+  languageSnippet: { type: String, maxLength: 1000 },
   choices: {
-    type: {
+    format: {
       type: String,
       required: true,
-      enum: ["Checkbox", "Radio"],
-      default: "Checkbox",
+      lowercase: true,
+      enum: ["checkbox", "radio"],
+      default: "checkbox",
     },
-    arr: [
+    list: [
       {
         name: { type: String, required: true, maxLength: 15 },
         label: { type: String, required: true, maxLength: 15 },
+        answer: { type: Boolean, required: true },
       },
     ],
   },
-
-  expectedAnswers: [
-    {
-      name: { type: String, required: true, maxLength: 15 },
-      value: String,
-    },
-  ],
 });
 
 exports.Question = mongoose.model("Question", QuestionSchema);
-exports.titleRegex = mongoose.model("Question", QuestionSchema);

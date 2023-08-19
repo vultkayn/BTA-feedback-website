@@ -86,7 +86,7 @@ export default function ExercisePage() {
         title: "I am a question",
         subject: "There are 10 kind of people.",
         language: "cpp",
-        languageContent: "",
+        languageSnippet: "",
         choices: {
           type: "checkbox",
           arr: [

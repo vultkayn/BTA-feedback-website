@@ -1,11 +1,11 @@
 const { Category } = require("../models/categoryModel");
 const {
   breakdownURI,
-  nameRegex,
-  routeRegex,
-  nameMaxLength,
   makeURIName,
+  makeURIRoute,
 } = require("../models/helpers/practice");
+const { nameValidationChain, routeValidationChain } =
+  require("./validators").practice;
 const { Exercise } = require("../models/exerciseModel");
 const { checkAuth } = require("../passport/authenticate");
 const { validateSanitization } = require("../sanitizers");
@@ -52,19 +52,53 @@ async function getAndPrepareSection({ title, parentURI, name, category }) {
   });
   const listing = sectionDocuments
     ? sectionDocuments.map((sub) => {
-        return {
+        let doc = {
           uri: sub.uri,
+          uriName: sub.uriName,
           name: sub.name,
           kind: sub.kind,
           solved: sub.solved,
         };
+        if (name === "subcategories") doc.route = sub.route;
+        else if (name === "exercises") doc.route = sub.uri.split("/")[0];
+        return doc;
       })
     : [];
 
-  return { title, listing };
+  return { title, name, listing };
 }
 
-exports.subcategories = [
+/** Retrieve a Category's subcategories *details*.
+ *  Endpoint of /:uri/subcategories
+ *
+ * REQUESTS
+ *  PARAMETERS
+ *   :uri | The category to insert the exercise into.
+ *   :full Optional | If set, then
+ *
+ * RESPONSE
+ *  name | User-friendly name of the created Category
+ *  uriName | URL-friendly name of the created Category
+ *  uri | URI of the created Category
+ *  route | Route of the created Category
+ *  kind | Kind of a category (i.e 0)
+ *  solved | Whether all subcategories and exercises are solved.
+ *  description | Description of the requested category.
+ *  sections | An array of populated subsections of the requested
+ *    category. For a category, this includes an "exercises" subsection
+ *    as well as a "subcategories" one.
+ *    Section's anatomy is
+ *     {
+ *      title: may differ, what to display to the user,
+ *      name: enum["exercises", "subcategories"],
+ *      listing: Array(documents)
+ *     }
+ *
+ * ERRORS:
+ *  404 | category not found
+ *
+ */
+exports.subcategoriesDetails = [
   validateSanitization,
   async (req, res) => {
     const { route, uriName } = breakdownURI(req.params.uri, "-");
@@ -73,7 +107,8 @@ exports.subcategories = [
       uriName: uriName,
     }).exec();
 
-    if (category == null) return res.sendStatus(404);
+    if (category == null)
+      return res.status(404).json({ errors: "category not found" });
 
     const subCats = await findSectionDocs({
       category,
@@ -86,17 +121,75 @@ exports.subcategories = [
 exports.exercises = [
   validateSanitization,
   async (req, res) => {
-    const { route, uriName } = breakdownURI(req.params.uri, "-");
+    const { route, uriName } = breakdownURI(req.params.uri, "_");
     const category = await Category.findOne({
       route: route,
       uriName: uriName,
-    }).exec();
+    }).lean({ virtuals: true });
+    if (category == null)
+      return res.status(404).json({ errors: "category not found" });
+
     // BUG deal with error if not found.
-    const exos = await findSectionDocs({
-      category,
-      sectionName: "exercises",
-    }).exec();
+    const exos = await findSectionDocs(
+      {
+        category,
+        sectionName: "exercises",
+      },
+      { lean: true }
+    );
     return res.json(exos);
+  },
+];
+
+/** Given an user-friendly URI, retrieve at most 10 best Category
+ *  matches based on their URI closeness to the prefix body.uiURI.
+ *  Endpoint of /@find.
+ *
+ * REQUESTS
+ *  BODY
+ *   uiURI | User-friendly string of categories' names separated by '/'.
+ *
+ * RESPONSE
+ *  categories Array maxLength(10)
+ *    Array of Categories whose uri best matched with body.uiURI.
+ *
+ * ERRORS
+ *  400 | Usual errors for validation failures.
+ */
+exports.matchCategories = [
+  routeValidationChain(body("uiURI").customSanitizer((v) => makeURIRoute(v))),
+  validateSanitization,
+  async (req, res) => {
+    const { route, uriName } = breakdownURI(req.body.uiURI, "_");
+    const makeitRegexSafe = (str) =>
+      str.replaceAll(/([.+*?^$()[\]\\{}])/g, String.fromCharCode(92) + "$1");
+    const uriNamePfxRegex = new RegExp(`^${makeitRegexSafe(uriName)}`);
+    // prioritize Categories whose route matches exaclty the one given.
+    let query = Category.find({
+      route: route,
+      uriName: uriNamePfxRegex,
+    });
+    let categories = await q
+      .select("uri name uriName route")
+      .sort({ uriName: -1 })
+      .limit(10)
+      .lean();
+
+    categories ??= [];
+    if (categories.length < 10) {
+      const uriPfxRegex = new RegExp(
+        `^${makeitRegexSafe(route + "_" + uriName)}`
+      );
+      query = Category.find({ route: uriPfxRegex });
+      /* Enlarge search by using the whole uiURI as prefix route.  */
+      categories = await query
+        .select("uri name uriName route")
+        .sort({ route: 1 })
+        .limit(10 - categories.length)
+        .lean();
+    }
+
+    return res.json(categories ?? []);
   },
 ];
 
@@ -105,40 +198,59 @@ exports.exercises = [
    No exercises can be listed here.  */
 exports.index = async (req, res) => {
   // const indexCategories = await findSectionDocs({parentURI: "", sectionName: "subcategories"});
-  const subs = await getAndPrepareSection({
-    title: "Subcategories",
-    name: "subcategories",
-    parentURI: "",
-  });
-  debug("subsections are", subs);
+  const subcategoriesSection = await getAndPrepareSection(
+    {
+      title: "Subcategories",
+      name: "subcategories",
+      parentURI: "",
+    },
+    { lean: true }
+  );
+  debug("Categories at root are", subcategoriesSection);
   return res.json({
     route: "",
     uri: "",
     name: "Categories Index",
-    description: "Categories Index descr",
-    sections: [subs],
+    uriName: "",
+    description: "Index of all categories",
+    sections: [subcategoriesSection],
   });
 };
 
-/* Retrieve and send details of the Category at the given URI or 404.
-details: {
-  name: category.name,
-  uriName: category.uriName,
-  uri: category.uri,
-  route: category.route,
-  kind: category.kind, (= 0)
-  solved: category.solved,
-  description: category.description,
-  sections: [
-    {title, name, listing: []}
-  ]
-} 
-*/
+/**
+ * Send a Category's full details and its direct populated subsections.
+ *
+ * REQUESTS
+ *  PARAMETERS
+ *   :uri | The category to insert the exercise into.
+ *
+ * RESPONSE
+ *  name | User-friendly name of the created Category
+ *  uriName | URL-friendly name of the created Category
+ *  uri | URI of the created Category
+ *  route | Route of the created Category
+ *  kind | Kind of a category (i.e 0)
+ *  solved | Whether all subcategories and exercises are solved.
+ *  description | Description of the requested category.
+ *  sections | An array of populated subsections of the requested
+ *    category. For a category, this includes an "exercises" subsection
+ *    as well as a "subcategories" one.
+ *    Section's anatomy is
+ *     {
+ *      title: may differ, what to display to the user,
+ *      name: enum["exercises", "subcategories"],
+ *      listing: Array(documents)
+ *     }
+ *
+ * ERRORS:
+ *  404 | category not found
+ *
+ */
 exports.request = [
   validateSanitization,
   async (req, res) => {
     const uri = req.params.uri;
-    const { route, uriName } = breakdownURI(uri, "-");
+    const { route, uriName } = breakdownURI(uri, "_");
     debug("request cat", uri, "route is", route, "uriName is", uriName);
     const category = await Category.findOne({
       route: route,
@@ -163,8 +275,6 @@ exports.request = [
     });
     if (exos.listing.length) sections.push(exos);
 
-    debug("sending uri", category.uri);
-
     return res.json({
       name: category.name,
       uriName: category.uriName,
@@ -177,7 +287,6 @@ exports.request = [
     });
   },
 ];
-
 
 /**
  * Create a Category from its most basics components NAME, DESCRIPTION and ROUTE.
@@ -207,28 +316,9 @@ exports.request = [
 exports.create = [
   // hasAccessRights(ACCESS.W + ),
   checkAuth(),
-  body("name")
-    .escape()
-    .trim()
-    .notEmpty()
-    .withMessage("name too short")
-    .bail()
-    .isLength({ max: nameMaxLength })
-    .withMessage("name too long")
-    .bail()
-    .custom((v) => {
-      if (!nameRegex.test(v)) throw new Error("invalid characters");
-      return true;
-    }),
+  nameValidationChain(body("name")),
   body("description").optional().escape(),
-  body("route")
-    .isString()
-    .escape()
-    .trim()
-    .custom((v) => {
-      if (!routeRegex.test(v)) throw new Error("invalid characters");
-      return true;
-    }),
+  routeValidationChain(body("uiRoute").customSanitizer((v) => makeURIRoute(v))),
   validateSanitization,
   async (req, res) => {
     const { name, description, route } = req.body;
@@ -236,13 +326,20 @@ exports.create = [
     const uriName = makeURIName(name);
 
     if (!uriName.length && !route.length) return res.sendStatus(400);
-
+    // if (!route.length) route = '/';
+    debug("attempt to find", {
+      route: route,
+      uriName: uriName,
+    });
+    // inserting under Root is special case
     const match = await Category.findOne({
       route: route,
       uriName: uriName,
     }).exec();
-    if (match != null)
+    if (match != null) {
+      debug("found category", match);
       return res.status(400).json({ errors: "category exists already" });
+    }
 
     let category = new Category({
       name: name,
@@ -269,7 +366,7 @@ exports.create = [
  *
  * RESPONSE
  *  200
- * 
+ *
  * ERRORS:
  *  404 | category not found
  *
@@ -287,24 +384,39 @@ exports.delete = [
     });
     if (cat == null)
       return res.status(404).json({ errors: "category not found" });
+    if (!route?.length && !uriName?.length)
+      return res.status(404).json({ errors: "cannot delete root" });
 
-    async function subDocsTreeDeletion(category) {
-      // delete all subcategories if the route change.
-      const subDocs = await findSectionDocs({
-        category: cat,
-        sectionName: "subcategories",
-      });
-      if (subDocs.length === 0) return;
+    // async function subDocsTreeDeletion(category) {
+    //   // delete all subcategories if the route change.
+    //   const subDocs = await findSectionDocs({
+    //     category: cat,
+    //     sectionName: "subcategories",
+    //   });
+    //   if (subDocs.length === 0) return;
+    //   await Promise.all(
+    //     subDocs.map(async (sub) => {
+    //       await subDocsTreeDeletion(sub); // to trigger pre('deleteOne') hook
+    //       return await sub.deleteOne();
+    //     })
+    //   );
+    // }
+
+    let delSubCats = true;
+    if (delSubCats) {
+      const reFriendlyUri = cat.uri.replaceAll(
+        /([.+*?^$()[\]\\{}])/g,
+        String.fromCharCode(92) + "$1"
+      );
+      const regex = new RegExp(`^${reFriendlyUri}`);
+      const subCats = await Category.find({ route: regex }).exec();
       await Promise.all(
-        subDocs.forEach(async (sub) => {
-          await subDocsTreeDeletion(sub); // to trigger pre('deleteOne') hook
-          return await sub.deleteOne();
+        subCats.map(async (doc) => {
+          // const exoDoc = await Exercise.deleteMany({category: doc._id}).exec();
+          await doc.deleteOne(); // Should call preHook that will delete its exercises too.
         })
       );
     }
-
-    let delSubCats = true; // TODO change that for optional deletion functionality
-    delSubCats && (await subDocsTreeDeletion(cat));
     await cat.deleteOne();
     // FIXME for optional functionality, the subcategories should be moved one level up
 
@@ -329,29 +441,8 @@ exports.delete = [
 exports.update = [
   checkAuth(),
 
-  body("name")
-    .optional()
-    .escape()
-    .trim()
-    .notEmpty()
-    .withMessage("name too short")
-    .bail()
-    .isLength({ max: nameMaxLength })
-    .withMessage("name too long")
-    .bail()
-    .custom((v) => {
-      if (!nameRegex.test(v)) throw new Error("invalid characters");
-      return true;
-    }),
-  body("route")
-    .optional()
-    .isString()
-    .escape()
-    .trim()
-    .custom((v) => {
-      if (!routeRegex.test(v)) throw new Error("invalid characters");
-      return true;
-    }),
+  nameValidationChain(body("name").optional()),
+  routeValidationChain(body("route").optional()),
   body("description").optional().escape(),
   validateSanitization,
 

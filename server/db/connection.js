@@ -2,24 +2,21 @@ const mongoose = require("mongoose");
 const MongoStore = require("connect-mongo");
 mongoose.set("strictQuery", false);
 const username = encodeURIComponent(process.env.MONGO_DB_USER);
-const password = encodeURIComponent(process.env.MONGO_DB_PASS);
 const mongoDBURL = `mongodb+srv://${username}:<password>@cluster0.mug6fr1.mongodb.net/?retryWrites=true&w=majority`;
-const mongoDBURL_priv = `mongodb+srv://${username}:${password}@cluster0.mug6fr1.mongodb.net/?retryWrites=true&w=majority`;
 
-const debug = require("debug")("server:server");
+const debug = require("debug")("server:connect");
 
 console.log(process.env.NODE_ENV);
-// console.debug ("env is", process.env);
 
 let dbName = process.env.MONGO_DB_NAME
 if ("test" === process.env.NODE_ENV)
   dbName = process.env.MONGO_TEST_DB_NAME
-if ("dev" === process.env.NODE_ENV)
+if ("development" === process.env.NODE_ENV)
   dbName = process.env.MONGO_DEV_DB_NAME
 
 console.debug("database name", dbName);
 mongoose
-  .connect(mongoDBURL_priv, {
+  .connect(process.env.MONGO_DB_URL_PRIV, {
     dbName: dbName,
     /* ssl: true,
     sslValidate: true,
@@ -35,6 +32,13 @@ mongoose
 mongoose.connection.on("close", () =>
   debug(`Closed connection to ${mongoDBURL}`)
 );
+
+process.on('SIGINT', () => {
+  mongoose.connection.close(() => {
+    debug('conection to mongoose finished');
+    process.exit(0);
+  });
+});
 
 const store = MongoStore.create({
   client: mongoose.connection.getClient(),

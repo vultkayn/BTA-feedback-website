@@ -1,18 +1,15 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-const {Exercise} = require("./exerciseModel");
+const { Exercise } = require("./exerciseModel");
 
-const {
-  routeRegex,
-  nameRegex,
-  breakdownURI
-} = require("./helpers/practice");
+const { routeRegex, nameRegex, breakdownURI, nameMaxLength } = require("./helpers/practice");
+
+
 
 const CategorySchema = new Schema(
   {
     route: {
       type: String,
-      default: "",
       validate: {
         validator: function (v) {
           return routeRegex.test(v);
@@ -22,7 +19,6 @@ const CategorySchema = new Schema(
       trim: true,
     },
     name: {
-      // name.replaceAll(/[^\w ._,+-]/g, "");
       type: String,
       validate: {
         validator: (v) => {
@@ -30,6 +26,7 @@ const CategorySchema = new Schema(
         },
         message: "Invalid format of the name",
       },
+      maxLength: nameMaxLength,
       required: [true, "Category name required"],
     },
     uriName: {
@@ -49,7 +46,6 @@ const CategorySchema = new Schema(
   }
 );
 
-
 /****HELPERS****/
 
 
@@ -63,13 +59,11 @@ function makeCategoryURI (route, uriName)
 
 /************ VIRTUALS ********************/
 
-
-
 CategorySchema.virtual("kind").get(() => 0);
 CategorySchema.virtual("solved").get(() => true);
 CategorySchema.virtual("uri")
   .get(function () {
-    return makeCategoryURI (this.route, this.uriName);
+    return makeCategoryURI(this.route, this.uriName);
   })
   .set(function (uri) {
     const { route, uriName } = breakdownURI(uri, "-");
@@ -82,10 +76,16 @@ CategorySchema.virtual("progress").get(function () {
   return [0, 50];
 });
 
-
-CategorySchema.pre('deleteOne', {document: true, query: false}, async function () {
-  return await Exercise.deleteMany({category: this._id});
-});
+CategorySchema.pre(
+  "deleteOne",
+  { document: true, query: false },
+  async function () {
+    return await Exercise.deleteMany({ category: this._id });
+  }
+);
+// CategorySchema.pre('deleteOne', {document: true, query: false}, async function () {
+//   return await Exercise.deleteMany({category: this._id});
+// });
 
 
 /**********EXPORTS********* */
@@ -94,7 +94,6 @@ exports.Category = mongoose.model("Category", CategorySchema);
 
 /****** DEBUG & TESTS PURPOSES **********/
 
-if ( process.env.NODE_ENV === 'test')
-{
+if (process.env.NODE_ENV === "test") {
   exports.makeCategoryURI = makeCategoryURI;
 }

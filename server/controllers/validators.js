@@ -1,21 +1,53 @@
-const { param } = require("express-validator");
-
+const { body } = require("express-validator");
 const {
   routeRegex,
+  nameRegex,
+  titleRegex,
   makeURIName,
+  nameMaxLength,
 } = require("../models/helpers/practice");
+const { escapeHTML } = require("../sanitizers");
+
+const debug = require("debug")("server:validators");
+
+const questionChoicesCustomValidator = (choices) => {
+  if (choices == null || typeof choices !== "object")
+    throw new Error("invalid choices");
+  if (!["checkbox", "radio"].includes(choices.format))
+    if (!Array.isArray(choices.list))
+      throw new Error("choices.list is not an array");
+  for (let c of choices.list) {
+    c.name = c.name?.trim();
+    c.name = escapeHTML(c.name);
+    if (!c.name || c.name?.length > 15) throw new Error("invalid choice name");
+    c.label = c.label?.trim();
+    c.label = escapeHTML(c.label);
+    if (!c.label || c.label?.length > 15)
+      throw new Error("invalid choice label");
+    if (typeof c.answer !== "boolean")
+      throw new Error("choice answer must be a boolean");
+  }
+  return true;
+};
+
+const questionCustomValidator = (question) => {
+  debug("questionCustomValidator received", question);
+  if (question == null || typeof question !== "object")
+    throw new Error("invalid question");
+  question.title = question.title?.trim();
+  question.title = escapeHTML(question.title);
+  if (!titleRegex.test(question.title)) throw new Error("invalid title");
+  question.statement = question.statement?.trim();
+  question.statement = escapeHTML(question.statement);
+  if (!question.statement) throw new Error("invalid statement");
+  question.explanation = question.explanation?.trim();
+  question.explanation = escapeHTML(question.explanation);
+  if (!question.explanation) throw new Error("invalid explanation");
+
+  return questionChoicesCustomValidator(question.choices);
+};
 
 const practice = {
-  URIParamValidator: param("uri")
-    .escape()
-    .notEmpty()
-    .custom((value) => routeRegex.test(value)),
-
-  nameParamValidator: param("uriName")
-    .escape()
-    .notEmpty()
-    .custom((value) => routeRegex.test(value)),
-
   /**
    * Middleware to validate that the given User Interface name, once formatted, matches the "name" component of the uri.
    * @param {String} sep Separator used to distinguished the route and the name.
@@ -29,30 +61,17 @@ const practice = {
       return true;
     };
   },
+  questionsValidator: body("questions")
+    .isArray({ min: 1 })
+    .custom((questions) => {
+      for (let q of questions) {
+        questionCustomValidator(q);
+      }
+      return true;
+    }),
 
-  questionChoicesCustomValidator: (choices, { req }) => {
-    if (
-      !Array.isArray(choices.arr) /* ||
-        req.body.expectedAnswers?.length !== choices?.arr?.length */
-    )
-      throw new Error(
-        "choices should be in similar number than the expected number"
-      );
-    if (!["Checkbox", "Radio"].includes(choices?.type))
-      // FIXME XSS escape this type.
-      throw new Error(`a choice has an invalid type of ${type}`);
-    for (const cho of choices.arr) {
-      const { name, label } = cho;
-      name ??= "";
-      label ??= "";
-      // FIXME XSS -> escape name and label
-      if (typeof name !== "string" || name.length <= 0 || name.length > 15)
-        throw new Error(`invalid choice name`);
-      if (typeof label !== "string" || label.length <= 0 || label.length > 15)
-        throw new Error(`invalid choice label`);
-    }
-    return true;
-  },
+  questionCustomValidator: questionCustomValidator,
+  questionChoicesCustomValidator: questionChoicesCustomValidator,
 
   questionAnswersCustomValidator: (arr, { req }) => {
     // if (req.body.choices?.arr?.length !== arr.length)
@@ -71,6 +90,32 @@ const practice = {
     }
     return true;
   },
+
+  nameValidationChain: (location) =>
+    location
+      .escape()
+      .trim()
+      .customSanitizer((v) => v.replace(/ {2,}/g, " "))
+      .notEmpty()
+      .withMessage("name too short")
+      .bail()
+      .isLength({ max: nameMaxLength })
+      .withMessage("name too long")
+      .bail()
+      .custom((v) => {
+        if (!nameRegex.test(v)) throw new Error("invalid characters");
+        return true;
+      }),
+
+  routeValidationChain: (location) =>
+    location
+      .isString()
+      .escape()
+      .trim()
+      .custom((v) => {
+        if (!routeRegex.test(v)) throw new Error("invalid characters");
+        return true;
+      }),
 };
 
-module.exports = { practice: practice };
+module.exports = { practice: practice, escapeHTML: escapeHTML };

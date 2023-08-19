@@ -45,7 +45,7 @@ server:
 #     - title
 #     - statement
 #     - language: optional
-#     - languageContent: optional
+#     - languageSnippet: optional
 #     - (type, arr(name, label)[]) choices: array of choices
 #     - explanation: explanation in case of failure
 #     - (value)[] answers: array of expected 'any' value, one per choice.

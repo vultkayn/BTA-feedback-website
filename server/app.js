@@ -1,4 +1,4 @@
-require("dotenv").config();
+require('dotenv-expand').expand(require('dotenv').config());
 
 const createError = require("http-errors");
 const express = require("express");
@@ -53,15 +53,13 @@ app.get("*", (req, res) => {
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   debug("Request default handled, forward to 404.");
-  debug(req);
   next(createError(404));
 });
 
 // error handler
 app.use(function (err, req, res, next) {
   debug("Default handle of", err);
-  res.status(err.status || 500);
-  res.json(err);
+  res.status(err.status || 500).json(err || {});
 });
 
 module.exports = app;

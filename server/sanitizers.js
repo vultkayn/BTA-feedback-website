@@ -39,3 +39,4 @@ exports.validateSanitization = (req, res, next) => {
   return _customValidateSanitization(validationResult)(req, res, next);
 };
 
+exports.escapeHTML = require("html-escaper").escape;

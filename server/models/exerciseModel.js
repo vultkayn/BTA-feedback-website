@@ -1,7 +1,14 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
-const nameRegex = /[\w ._,+-]{1,30}/;
+const {
+  routeRegex,
+  nameRegex,
+  makeURIName,
+} = require("../models/helpers/practice");
+const debug = require("debug")("server:practice");
+const { Question } = require("./questionModel");
+const { Attempt } = require("./attemptModel");
 
 const ExerciseSchema = new Schema(
   {
@@ -22,7 +29,7 @@ const ExerciseSchema = new Schema(
       required: true,
       validate: {
         validator: (v) => {
-          return pathRegex.test(v);
+          return routeRegex.test(v);
         },
         message: "Invalid format of the uri name",
       },
@@ -34,18 +41,16 @@ const ExerciseSchema = new Schema(
       ref: "User",
       required: true,
     },
-    questions: [
+    questionsIDs: [
       {
         type: Schema.Types.ObjectId,
         ref: "Question",
       },
     ],
-    category: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Category",
-      },
-    ],
+    category: {
+      type: Schema.Types.ObjectId,
+      ref: "Category",
+    },
   },
   {
     toJSON: { virtuals: true },
@@ -53,18 +58,25 @@ const ExerciseSchema = new Schema(
   }
 );
 
+function makeExerciseURI(categoryURI, uiName) {
+  return categoryURI + "/" + makeURIName(uiName);
+}
+
 ExerciseSchema.virtual("kind").get(() => 1);
-ExerciseSchema.virtual("solved").get(() => true);
-ExerciseSchema.virtual("path").get(function () {
-  const formatNameURI = (filteredName) => {
-    return filteredName
-      .replaceAll(/[^a-zA-Z0-9-+_ ]/g, "")
-      .replaceAll("-", "_")
-      .replaceAll(" ", "_");
-  };
-  const pureNameURI = formatNameURI(this.name);
-  return this.category.path + "/" + pureNameURI;
+ExerciseSchema.virtual("solved").get(() => false);
+ExerciseSchema.virtual("uri").get(function () {
+  return makeExerciseURI(this.category.uri, this.name);
+});
+
+ExerciseSchema.pre("deleteOne", { document: true }, async function () {
+  // Runs when you call `doc.deleteOne()`
+  debug("calling deleteOne preHook");
+  await Promise.all(
+    this.questionsIDs.map(async (qid) => await Question.findByIdAndDelete(qid))
+  );
+
+  await Attempt.deleteMany({ exercise: this._id });
 });
 
 exports.Exercise = mongoose.model("Exercise", ExerciseSchema);
-exports.nameRegex = nameRegex;
+exports.makeExerciseURI = makeExerciseURI;

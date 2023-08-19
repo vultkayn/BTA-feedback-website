@@ -1,0 +1,22 @@
+#### UNK category
+POST  http://127.0.0.1:8888/api/practice/unknowncat/ex/
+content-type: application/json
+Accept: application/json
+Cookie: connect.sid=s%3AFpulnHpAedqIiG2XRXAs0uHoPcR_EMt3.Wr%2B44Udi5abW8rSnD0jHb55RRIgIngON0xoA%2BoaH3Gk;
+
+{
+"name": "Duper_Dummy-09 SuperTest++",
+"route": "dummyCategory_Parent",
+"description": "Just any other SuperTest category description"
+}
+### valid creation
+POST  http://127.0.0.1:8888/api/practice/category/dummyCategory_Parent-Duper_Dummy09+SuperTest/ex/
+content-type: application/json
+Accept: application/json
+Cookie: connect.sid=s%3AFpulnHpAedqIiG2XRXAs0uHoPcR_EMt3.Wr%2B44Udi5abW8rSnD0jHb55RRIgIngON0xoA%2BoaH3Gk;
+
+{
+"name": "garbage-collector_in  C_17",
+"questions": [],
+"description": "Just anoother## exercise."
+}

@@ -9,7 +9,7 @@ const debug = require("debug")("server:practice");
 
 const nameRegex = /^[a-zA-Z0-9 _+-]{1,30}$/;
 const routeRegex = /^([a-zA-Z0-9_+]+-?[a-zA-Z0-9_+]+)*$/;
-const titleRegex = /[\w ?^.{}[\]_,+-]{1,60}/;
+const titleRegex = /[\w ?!^.{}[\]#_,+-]{1,60}/;
 exports.nameMaxLength = 30;
 exports.nameRegex = nameRegex;
 exports.routeRegex = routeRegex;
@@ -35,9 +35,9 @@ const getRouteOffURI = function (uri, sep = "-") {
  * @returns {route, uriName} The route as the unique identifier in the Schema, and the name part of the uri.
  */
 exports.breakdownURI = function (uri, sep = "-") {
-  const route = getRouteOffURI(uri);
+  const route = getRouteOffURI(uri, sep);
   const uriName =
-    route.length === uri.length ? uri : uri.replace(route + sep, "");
+    route?.length === uri.length ? uri : uri.replace(route + sep, "");
   return { route: route, uriName: uriName };
 };
 
@@ -59,6 +59,5 @@ exports.makeURIName = function (uiName) {
     debug("uiName was", uiName);
     throw new Error("Invalid user friendly name cannot be casted to uri");
   }
-  // const pureName = uiName.replaceAll(/[^\w ._,+-]/g, "");
   return makeURIName(uiName);
 };
