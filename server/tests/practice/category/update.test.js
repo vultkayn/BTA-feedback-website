@@ -30,7 +30,7 @@ beforeAll(async () => {
     .set("Cookie", sid_cookie)
     .send({
       name: DummyCategory.name,
-      route: DummyCategory.route,
+      uiRoute: DummyCategory.uiRoute,
       description: DummyCategory.description,
     });
   await request(app)
@@ -170,7 +170,7 @@ describe("PUT - Update category" , () => {
         .set("Cookie", sid_cookie)
         .send({
           name: DummyCategory.name,
-          route: DummyCategory.route,
+          uiRoute: DummyCategory.uiRoute,
           description: DummyCategory.description,
         });
       await request(app).get(DummyCategoryFullURL).expect(200);

@@ -16,6 +16,7 @@ const ChildCategory = {
   name: "child category",
   uriName: "child+category",
   route: DummyCategory.uri,
+  uiRoute: "/dummy-Category Parent/Duper-Dummy-09 SuperTest/",
   uri: DummyCategory.uri + "_child+category",
   description: "this is a subcategory of DummyCategory",
   fullURL: DummyCategoryFullURL + "_child+category",
@@ -41,7 +42,7 @@ beforeAll(async () => {
     .set("Cookie", sid_cookie)
     .send({
       name: DummyCategory.name,
-      route: DummyCategory.route,
+      uiRoute: DummyCategory.uiRoute,
       description: DummyCategory.description,
     });
   await request(app)

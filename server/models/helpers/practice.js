@@ -7,10 +7,10 @@ const debug = require("debug")("server:practice");
  * for persistent storage.
  */
 
-const nameRegex = /^[a-zA-Z0-9 _+-]{1,30}$/;
-const routeRegex = /^([a-zA-Z0-9_+]+-?[a-zA-Z0-9_+]+)*$/;
-const titleRegex = /[\w ?!^.{}[\]#_,+-]{1,60}/;
-exports.nameMaxLength = 30;
+const nameRegex = /^[a-zA-Z0-9-]+([ _]?[a-zA-Z0-9-]+)*$/;
+const routeRegex = /^([a-zA-Z0-9-]+[+_]?[a-zA-Z0-9-]+)*$/;
+const titleRegex = /[\w ?!^.{}[\]#_,+-]{1,100}/;
+exports.nameMaxLength = 40;
 exports.nameRegex = nameRegex;
 exports.routeRegex = routeRegex;
 exports.titleRegex = titleRegex;
@@ -21,7 +21,7 @@ exports.titleRegex = titleRegex;
  * @param {String} sep Separator used to distinguished the route and the name.
  * @returns The extracted route part of the uri, identical to the unique Schema identifier.
  */
-const getRouteOffURI = function (uri, sep = "-") {
+const getRouteOffURI = function (uri, sep = "_") {
   if (!uri) return uri;
   const lastSepPos = uri.lastIndexOf(sep);
   if (lastSepPos === -1) return "";
@@ -34,10 +34,11 @@ const getRouteOffURI = function (uri, sep = "-") {
  * @param {String} sep Separator used to distinguished the route and the name.
  * @returns {route, uriName} The route as the unique identifier in the Schema, and the name part of the uri.
  */
-exports.breakdownURI = function (uri, sep = "-") {
-  const route = getRouteOffURI(uri, sep);
+exports.breakdownURI = function (uri, sep = "_") {
+  let route = getRouteOffURI(uri, sep);
   const uriName =
     route?.length === uri.length ? uri : uri.replace(route + sep, "");
+  // if (! route.length) route = '/'; // For root category
   return { route: route, uriName: uriName };
 };
 
@@ -47,17 +48,43 @@ exports.breakdownURI = function (uri, sep = "-") {
  * @returns uriName = String: A uri friendly formatted name, as could appear suffixed to a route in a URI
  */
 exports.makeURIName = function (uiName) {
-  const makeURIName = (filteredName) => {
-    return filteredName
-      .replaceAll(/[^a-zA-Z0-9-+_ ]/g, "")
-      .replaceAll("-", "")
-      .replaceAll("+", "")
-      .replaceAll(" ", "+");
-  };
-  if (!nameRegex.test(uiName))
-  {
+  if (!nameRegex.test(uiName) || uiName.length > exports.nameMaxLength) {
     debug("uiName was", uiName);
     throw new Error("Invalid user friendly name cannot be casted to uri");
   }
-  return makeURIName(uiName);
+  return uiName.replaceAll(/[^a-zA-Z0-9 -]/g, "").replaceAll(" ", "+");
+};
+
+/**
+ *
+ * @param {String} uiRoute The route as given in the User Interface, i.e. without much validation and processing.
+ *  The route segments are ui names separated by '/'.
+ * @returns uiRoute = String: A uri friendly formatted name, as could appear suffixed to a route in a URI
+ */
+exports.makeURIRoute = function (uiRoute) {
+  return uiRoute
+    .replaceAll(/[^a-zA-Z0-9 /-]/g, "")
+    .replaceAll(" ", "+")
+    .replaceAll("/", "_")
+    .replace(/^_+/, "")
+    .replace(/_+$/, "");
+};
+
+/**
+ *
+ * @param {String} uri The URL-friendly uri.
+ *  Segments are uriNames separated by '_'.
+ * @param {Optional(String)} sep Either '_' (Category URI) or '/' (Exercise URI).
+ * @returns {
+ * uiRoute: A user-friendly formatted route, with '/' separator,
+ * name: a user-friendly name, last segment of the uri
+ * }
+ */
+exports.revertURI = function (uri, sep = "_") {
+  if (!uri) return "";
+  const { route, uriName } = exports.breakdownURI(uri, sep);
+  return {
+    uiRoute: "/" + route.replaceAll("_", "/").replaceAll("+", " "),
+    name: uriName.replaceAll("+", " "),
+  };
 };

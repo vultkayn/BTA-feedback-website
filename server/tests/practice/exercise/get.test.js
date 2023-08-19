@@ -32,7 +32,7 @@ beforeAll(async () => {
     .set("Cookie", sid_cookie)
     .send({
       name: DummyCategory.name,
-      route: DummyCategory.route,
+      uiRoute: DummyCategory.uiRoute,
       description: DummyCategory.description,
     });
   // check that DummyCategory is settled

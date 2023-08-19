@@ -3,13 +3,13 @@ exports.sectionsDummy = [
     title: "Exercises",
     listing: [
       {
-        uri: "memory-pointers/exo1",
+        uri: "memory_pointers/exo1",
         name: "Exercise 1",
         solved: false,
         kind: 1,
       },
       {
-        uri: "memory-pointers/exercise-2",
+        uri: "memory_pointers/exercise-2",
         name: "Exercise 2",
         solved: true,
         kind: 1,
@@ -20,7 +20,7 @@ exports.sectionsDummy = [
       { uri: "memory/exercise5", name: "exercise5", solved: false, kind: 1 },
       { uri: "memory/exo5", name: "exo5", solved: false, kind: 1 },
       {
-        uri: "garbage_collector/exo46",
+        uri: "garbage-collector/exo46",
         name: "exo46",
         solved: false,
         kind: 1,
@@ -35,44 +35,46 @@ exports.sectionsDummy = [
       { uri: "memory", name: "memory", solved: false, kind: 0 },
       { uri: "oop", name: "oop", solved: true, kind: 0 },
       {
-        uri: "garbage_collector",
+        uri: "garbage+collector",
         name: "garbage collector",
         solved: false,
         kind: 0,
       },
       { uri: "c", name: "c", solved: false, kind: 0 },
-      { uri: "c++", name: "c++", solved: false, kind: 0 },
-      { uri: "c++-types", name: "types", solved: true, kind: 0 },
+      { uri: "cpp", name: "cpp", solved: false, kind: 0 },
+      { uri: "cpp_types", name: "types", solved: true, kind: 0 },
       { uri: "pointers", name: "pointers", solved: false, kind: 0 },
       { uri: "memory", name: "memory", solved: false, kind: 0 },
       { uri: "oop", name: "oop", solved: false, kind: 0 },
       {
-        uri: "garbage_collector",
+        uri: "garbage+collector",
         name: "garbage collector",
         solved: false,
         kind: 0,
       },
-      { uri: "c2", name: "c", solved: false, kind: 0 },
-      { uri: "c++2", name: "c++", solved: false, kind: 0 },
-      { uri: "types2", name: "types", solved: false, kind: 0 },
+      { uri: "c", name: "c", solved: false, kind: 0 },
+      { uri: "cpp", name: "cpp", solved: false, kind: 0 },
+      { uri: "types", name: "types", solved: false, kind: 0 },
     ],
   },
 ];
 
 exports.DummyCategory = {
-  name: "Duper_Dummy-09 SuperTest++",
-  uriName: "Duper_Dummy09+SuperTest",
-  route: "dummyCategory_Parent",
-  uri: "dummyCategory_Parent-Duper_Dummy09+SuperTest",
+  name: "Duper-Dummy-09 SuperTest",
+  uriName: "Duper-Dummy-09+SuperTest",
+  route: "dummy-Category+Parent",
+  uiRoute: "/dummy-Category Parent",
+  uri: "dummy-Category+Parent_Duper-Dummy-09+SuperTest",
   description: "Just any other SuperTest category description",
   sections: exports.sectionsDummy,
 };
 
 exports.DummyCategoryUpdated = {
   name: "New name for dummy7-1",
-  uriName: "New+name+for+dummy71",
-  route: "new_Parent1-newP2",
-  uri: "new_Parent1-newP2-New+name+for+dummy71",
+  uriName: "New+name+for+dummy7-1",
+  route: "new+Parent1_newP2",
+  uiRoute: "/new Parent1/newP2",
+  uri: "new+Parent1_newP2_New+name+for+dummy7-1",
   description: "New description",
   sections: exports.sectionsDummy,
 };
@@ -137,10 +139,11 @@ exports.DummyQuestions = [
   },
 ];
 exports.DummyExercise = {
-  name: "garbage-collector_in  C_17",
-  uriName: "garbagecollector_in++C_17",
-  uri: exports.DummyCategory.uri + "/" + "garbagecollector_in++C_17",
+  name: "garbage-collector in C17",
+  uriName: "garbage-collector+in+C17",
+  uri: exports.DummyCategory.uri + "/" + "garbage-collector+in+C17",
   categoryURI: exports.DummyCategory.uri,
+  uiCategoryURI: exports.DummyCategory.uiRoute + "/" + exports.DummyCategory.name,
   category: "",
   description: "Just anoother## exercise.",
   solved: false,
@@ -148,12 +151,13 @@ exports.DummyExercise = {
 };
 
 exports.DummyExerciseUpdated = {
-  name: "garbage-collector_in  C_17",
-  uriName: "garbagecollector_in++C_17",
-  uri: exports.DummyCategory.uri + "/" + "garbagecollector_in++C_17",
+  name: "Gimple intermediate",
+  uriName: "Gimple+intermediate",
+  uri: exports.DummyCategory.uri + "/" + "Gimple+intermediate",
   categoryURI: exports.DummyCategory.uri,
+  uiCategoryURI: exports.DummyCategory.uiRoute + "/" + exports.DummyCategory.name,
   category: "",
-  description: "Just anoother## exercise.",
+  description: "Gcc uses an intermediate representation, called Gimple.",
   solved: false,
   questionsIDs: [],
 };

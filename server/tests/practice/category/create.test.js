@@ -7,7 +7,6 @@ const {
   DummyCategoryFullURL,
 } = require("../dummies");
 
-const invalidRoute = "isItvalid.";
 const emptyName = "";
 const invalidName = "isItvalid?";
 const nameTooLong = "abcdefghijklsmnopqerzIBIZEYACGNVVCJVFZEIRPYUZRY";
@@ -30,7 +29,7 @@ beforeAll(async () => {
 describe(`POST - Create category`, () => {
   const payload = {
     name: DummyCategory.name,
-    route: DummyCategory.route,
+    uiRoute: DummyCategory.uiRoute,
     description: DummyCategory.description,
   };
 
@@ -93,10 +92,6 @@ describe(`POST - Create category`, () => {
       .expect(401);
   });
 
-      .expect(200, {
-        route: DummyCategory.route,
-        uri: DummyCategory.uri,
-        name: DummyCategory.name,
   describe("valid creation", () => {
     test("verify Category doesn't exists already", async () =>
       await request(app)
@@ -190,7 +185,7 @@ describe(`POST - Create category`, () => {
       .set("Content-Type", "application/json")
       .set("Accept", "application/json")
       .set("Cookie", sid_cookie)
-      .send({ ...payload, name: payload.name + "." })
+      .send({ ...payload, name: payload.name + "_" })
       .expect(400)
       .expect((res) => {
         expect(res.body).toHaveProperty(

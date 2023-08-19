@@ -10,6 +10,8 @@ const {
 
 const {
   makeURIName,
+  makeURIRoute,
+  revertURI,
   breakdownURI,
   routeRegex,
   nameRegex,
@@ -31,11 +33,11 @@ describe("check all helpers functions are OK", () => {
 
   const failures = [
     {
-      route: "dummyCategory_Parent-d-", // cannot end with -
-      uri: "dummyCategory_Parent--d-Dummyname+i0s_all_", // cannot have successive -
+      route: "dummyCategory-Parent_d_", // cannot end with category separator '_'
+      uri: "dummyCategory-Parent__d_Dummyname+i0sall", // cannot have successive separators '_'
     },
     {
-      route: "-dummyCategory_Parent-d", // cannot begin with -
+      route: "_dummyCategory-Parent_d", // cannot begin with separator '_'
     },
   ];
 
@@ -75,6 +77,15 @@ describe("check all helpers functions are OK", () => {
     }
   });
 
+  test("Parse user-friendly name to URL-friendly - makeURIName", () => {
+    for (const dummy of expectationsCat) {
+      expect(makeURIRoute(dummy.uiRoute)).toStrictEqual(dummy.route);
+    }
+    for (const dummy of expectationsExo) {
+      expect(makeURIRoute(dummy.uiCategoryURI)).toStrictEqual(dummy.categoryURI);
+    }
+  });
+
   test("URI construction for URL parameter. - makeCategoryURI", () => {
     for (const dummy of expectationsCat) {
       expect(makeCategoryURI(dummy.route, dummy.uriName)).toStrictEqual(
@@ -102,6 +113,20 @@ describe("check all helpers functions are OK", () => {
       expect(breakdownURI(dummy.uri, "/")).toStrictEqual({
         route: dummy.categoryURI,
         uriName: dummy.uriName,
+      });
+    }
+  });
+  test("An URI-friendly is fully revertable to a User-friendly version - revertURI", () => {
+    for (const dummy of expectationsCat) {
+      expect(revertURI(dummy.uri)).toStrictEqual({
+        uiRoute: dummy.uiRoute,
+        name: dummy.name,
+      });
+    }
+    for (const dummy of expectationsExo) {
+      expect(revertURI(dummy.uri, "/")).toStrictEqual({
+        uiRoute: dummy.uiCategoryURI,
+        name: dummy.name,
       });
     }
   });

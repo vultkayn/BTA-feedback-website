@@ -68,7 +68,7 @@ describe(`POST`, () => {
     description: DummyExercise.description,
   };
 
-  test(`${catEndPoint}inexistent-category/ex/`, async () => {
+  test(`${catEndPoint}inexistent_category/ex/`, async () => {
     await request(app)
       .post(`${catEndPoint}inexistent-category/ex/`)
       .set("Content-Type", "application/json")

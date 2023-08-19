@@ -37,7 +37,7 @@ beforeAll(async () => {
     .set("Cookie", sid_cookie)
     .send({
       name: DummyCategory.name,
-      route: DummyCategory.route,
+      uiRoute: DummyCategory.uiRoute,
       description: DummyCategory.description,
     });
   // check that DummyCategory is settled
@@ -66,7 +66,7 @@ describe(`POST`, () => {
 
   test("create into inexistent category", async () => {
     await request(app)
-      .post(`${categoryEndpoint}inexistent-category/ex/`)
+      .post(`${categoryEndpoint}inexistent_category/ex/`)
       .set("Content-Type", "application/json")
       .set("Accept", "application/json")
       .set("Cookie", sid_cookie)

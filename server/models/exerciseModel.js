@@ -9,6 +9,8 @@ const {
 const debug = require("debug")("server:practice");
 const { Question } = require("./questionModel");
 const { Attempt } = require("./attemptModel");
+const mongooseLeanVirtuals = require("mongoose-lean-virtuals");
+const mongooseLeanGetters = require('mongoose-lean-getters');
 
 const ExerciseSchema = new Schema(
   {
@@ -78,5 +80,7 @@ ExerciseSchema.pre("deleteOne", { document: true }, async function () {
   await Attempt.deleteMany({ exercise: this._id });
 });
 
+ExerciseSchema.plugin(mongooseLeanVirtuals);
+ExerciseSchema.plugin(mongooseLeanGetters);
 exports.Exercise = mongoose.model("Exercise", ExerciseSchema);
 exports.makeExerciseURI = makeExerciseURI;

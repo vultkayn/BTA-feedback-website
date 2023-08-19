@@ -4,6 +4,8 @@ const { Exercise } = require("./exerciseModel");
 
 const { routeRegex, nameRegex, breakdownURI, nameMaxLength } = require("./helpers/practice");
 
+const mongooseLeanVirtuals = require("mongoose-lean-virtuals");
+const mongooseLeanGetters = require('mongoose-lean-getters');
 
 
 const CategorySchema = new Schema(
@@ -48,13 +50,9 @@ const CategorySchema = new Schema(
 
 /****HELPERS****/
 
-
-
-function makeCategoryURI (route, uriName)
-{
-  if (route.length === 0)
-    return uriName;
-  return route + "-" + uriName;
+function makeCategoryURI(route, uriName) {
+  if (!route.length) return uriName;
+  return route + "_" + uriName;
 }
 
 /************ VIRTUALS ********************/
@@ -66,7 +64,7 @@ CategorySchema.virtual("uri")
     return makeCategoryURI(this.route, this.uriName);
   })
   .set(function (uri) {
-    const { route, uriName } = breakdownURI(uri, "-");
+    const { route, uriName } = breakdownURI(uri, "_");
     this.route = route;
     this.uriName = uriName;
   });
@@ -87,6 +85,8 @@ CategorySchema.pre(
 //   return await Exercise.deleteMany({category: this._id});
 // });
 
+CategorySchema.plugin(mongooseLeanVirtuals);
+CategorySchema.plugin(mongooseLeanGetters);
 
 /**********EXPORTS********* */
 

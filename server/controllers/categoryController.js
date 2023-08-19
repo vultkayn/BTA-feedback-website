@@ -21,20 +21,28 @@ const debug = require("debug")("server:practice");
  *  (String)    .sectionName Name of the section we are seeking the documents.
  * @returns (Array) array of documents within the section.
  */
-async function findSectionDocs({ category, parentURI, sectionName }) {
+async function findSectionDocs(
+  { category, parentURI, sectionName },
+  { lean = false }
+) {
   const subRoute = category?.uri ?? parentURI;
   let section = [];
-  debug("category is", category);
   switch (sectionName) {
     case "subcategories":
-      section = await Category.find({ route: subRoute }).exec();
+      section = lean
+        ? await Category.find({ route: subRoute }).lean({ virtuals: true })
+        : await Category.find({ route: subRoute }).exec();
       break;
     case "exercises":
       if (category === undefined || category === null)
         throw new Error(
           "'exercises' can only be found with a defined category"
         );
-      section = await Exercise.find({ category: category._id }).exec();
+      section = lean
+        ? await Exercise.find({ category: category._id }).lean({
+            virtuals: true,
+          })
+        : await Exercise.find({ category: category._id }).exec();
       break;
     default:
       throw new Error(
@@ -44,12 +52,15 @@ async function findSectionDocs({ category, parentURI, sectionName }) {
   return section;
 }
 async function getAndPrepareSection({ title, parentURI, name, category }) {
-  const sectionDocuments = await findSectionDocs({
-    category,
-    parentURI,
-    sectionName: name,
-    name,
-  });
+  const sectionDocuments = await findSectionDocs(
+    {
+      category,
+      parentURI,
+      sectionName: name,
+      name,
+    },
+    { lean: true }
+  );
   const listing = sectionDocuments
     ? sectionDocuments.map((sub) => {
         let doc = {
@@ -101,19 +112,20 @@ async function getAndPrepareSection({ title, parentURI, name, category }) {
 exports.subcategoriesDetails = [
   validateSanitization,
   async (req, res) => {
-    const { route, uriName } = breakdownURI(req.params.uri, "-");
+    const { route, uriName } = breakdownURI(req.params.uri, "_");
     const category = await Category.findOne({
       route: route,
       uriName: uriName,
-    }).exec();
+    }).lean({ virtuals: true, getters: true });
 
     if (category == null)
       return res.status(404).json({ errors: "category not found" });
 
-    const subCats = await findSectionDocs({
-      category,
-      sectionName: "subcategories",
-    }).exec();
+    // TODO additional functionality would be to return them 20 by 20 e.g.
+    const subCats = await Category.find({ route: category.uri }).lean({
+      virtuals: true,
+      getters: true
+    });
     return res.json(subCats);
   },
 ];
@@ -299,8 +311,9 @@ exports.request = [
  *    User-friendly name of the category to create.
  *   description Optional NotEmpty
  *    Description of the category to create.
- *   route
- *    URI of the closest parent Category the new Category should be a part of.
+ *   uiRoute
+ *    User-friendly string of categories' names separated by '/', representing the path
+ *    of the closest parent Category the new Category should be a part of.
  *
  * RESPONSE
  *  name | User-friendly name of the created Category
@@ -321,7 +334,8 @@ exports.create = [
   routeValidationChain(body("uiRoute").customSanitizer((v) => makeURIRoute(v))),
   validateSanitization,
   async (req, res) => {
-    const { name, description, route } = req.body;
+    const { name, description } = req.body;
+    const route = req.body.uiRoute;
     debug("Category.create request:", req.body);
     const uriName = makeURIName(name);
 

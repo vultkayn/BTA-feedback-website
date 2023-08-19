@@ -22,16 +22,20 @@ const {
   routeValidationChain,
 } = require("./validators").practice;
 
-async function getExoDoc(req) {
-  const category = await Category.findOne(breakdownURI(req.params.uri)).exec();
-  debug("getExoDoc category:", category);
+async function getExoDoc(req, { lean = false, leanOptions }) {
+  const category = await Category.findOne(breakdownURI(req.params.uri)).lean();
   if (category == null) throw new Error("category not found");
 
-  const exercise = await Exercise.findOne({
+  if (lean)
+    return await Exercise.findOne({
+      category: category._id,
+      uriName: req.params.uriName,
+    }).lean(leanOptions);
+
+  return await Exercise.findOne({
     category: category._id,
     uriName: req.params.uriName,
   }).exec();
-  return exercise;
 }
 
 
@@ -69,10 +73,23 @@ async function getExoDoc(req) {
 exports.request = [
   validateSanitization,
   async (req, res) => {
+    const toBePopulated = ["category"];
+    const full = "full" in req.query;
+    if (full) toBePopulated.push("questionsIDs");
+
+    const category = await Category.findOne(
+      breakdownURI(req.params.uri)
+    )?.lean();
+    if (category == null)
+      return res.status(404).json({ errors: "category not found" });
+    const exercise = await Exercise.findOne({
+      category: category._id,
+      uriName: req.params.uriName,
+    })
+      ?.lean({ virtuals: true, getters: true })
+      ?.populate(toBePopulated);
     if (exercise == null)
       return res.status(404).json({ errors: "exercise not found" });
-
-    await exercise.populate("category");
 
     let fetched = {
       category: exercise.category._id,
@@ -238,15 +255,19 @@ exports.delete = [
   validateSanitization,
 
   async (req, res) => {
-    let exercise = null;
-    try {
-      exercise = await getExoDoc(req);
-    } catch (err) {
-      return res.status(404).json({ errors: err.message });
-    }
+    const category = await Category.findOne(
+      breakdownURI(req.params.uri)
+    ).lean();
+    if (category == null)
+      return res.status(404).json({ errors: "category not found" });
+
+    const exercise = await Exercise.findOne({
+      category: category._id,
+      uriName: req.params.uriName,
+    }).exec();
+
     if (exercise == null)
       return res.status(404).json({ errors: "exercise not found" });
-
     await exercise.deleteOne();
     res.sendStatus(200);
   },
