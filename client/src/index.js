@@ -1,4 +1,4 @@
-import React, { StrictMode, useState } from "react";
+import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import Root from "./routes/root";
 import ErrorPage from "./routes/error-page";
@@ -6,19 +6,19 @@ import { LoginPage, SignupPage } from "./routes/account";
 import { ProfilePage, EditProfilePage } from "./routes/profile";
 import Home from "./routes/home";
 import "./index.css";
+import cookie from "react-cookies";
 
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { createApiClient } from "./bridge/bridge";
 import {
-  AuthLayout,
-  AuthContext,
   updateProfile,
   login,
-  isLogged,
   logout,
   signup,
   getIdentity,
-} from "./bridge/AuthProvider";
+  loggedUser,
+  NavigateFunctional,
+  IdentityProvider,
+} from "./bridge/authUtilities";
 import PracticeRouteScaffold, {
   CategoryPage,
   ExercisePage,
@@ -33,116 +33,109 @@ import ChatRoomPage from "./routes/chat";
 import { rootCategoryLoader, categoryLoader } from "./routes/practice/category";
 import { exerciseLoader } from "./routes/practice/exercise";
 
-const apiClient = createApiClient();
-
-const router = ({ identity, setIdentity }) =>
+const router = ({ identity, resetIdentityCookie }) =>
   createBrowserRouter([
     {
+      path: "/",
       element: (
-        <AuthContext.Provider value={{identity, isLogged}}>
-          <AuthLayout
-            apiClient={apiClient}
-            setIdentity={setIdentity}
-          />
-        </AuthContext.Provider>
+        <NavigateFunctional>
+          <IdentityProvider identity={identity}>
+            <Root />
+          </IdentityProvider>
+        </NavigateFunctional>
       ),
+      errorElement: <ErrorPage />,
+      id: "root",
       children: [
         {
-          path: "/",
-          element: <Root />,
           errorElement: <ErrorPage />,
-          id: "root",
           children: [
             {
+              index: true,
+              element: <Home />,
+            },
+            {
+              path: "account/login",
+              action: login({resetIdentityCookie}),
+              element: <LoginPage />,
+            },
+            {
+              path: "account/signup",
+              action: signup,
+              element: <SignupPage />,
+            },
+            {
+              path: "account/logout",
+              action: logout({resetIdentityCookie}),
+            },
+            {
+              path: "profile/",
+              id: "profile",
+              loader: getIdentity({resetIdentityCookie}),
+              element: <ProfilePage />,
+              children: [
+                {
+                  path: "edit/",
+                  action: updateProfile,
+                  element: <EditProfilePage />,
+                },
+              ],
+            },
+            {
+              path: "practice/",
+              element: <PracticeRouteScaffold />,
               errorElement: <ErrorPage />,
               children: [
                 {
                   index: true,
-                  element: <Home />,
+                  id: "categoryIndex",
+                  loader: rootCategoryLoader,
+                  element: <CategoryPage />,
                 },
                 {
-                  path: "account/login",
-                  action: login({ setIdentity, apiClient }),
-                  element: <LoginPage />,
+                  path: "@new",
+                  action: categoryCreationAction,
+                  element: <CategoryCreationPage />,
                 },
                 {
-                  path: "account/signup",
-                  action: signup({ setIdentity, apiClient }),
-                  element: <SignupPage />,
+                  path: "@delete",
+                  action: categoryDeletionAction,
                 },
+
                 {
-                  path: "account/logout",
-                  action: logout({setIdentity, apiClient}),
-                },
-                {
-                  path: "profile/",
-                  id: "profile",
-                  loader: getIdentity({ apiClient }),
-                  element: <ProfilePage />,
+                  path: ":uri",
+                  id: "category",
+                  loader: categoryLoader,
+                  element: <CategoryPage />,
                   children: [
-                    {
-                      path: "edit/",
-                      action: updateProfile({ apiClient }),
-                      element: <EditProfilePage />,
-                    },
-                  ],
-                },
-                {
-                  path: "practice/",
-                  element: <PracticeRouteScaffold />,
-                  errorElement: <ErrorPage />,
-                  children: [
-                    {
-                      index: true,
-                      id: "categoryIndex",
-                      loader: RootCategoryLoader({ apiClient }),
-                      element: <CategoryPage />,
-                    },
                     {
                       path: "@new",
-                      action: CategoryCreationAction({ apiClient }),
-                      element: <CategoryCreationPage />,
+                      action: exerciseCreationAction,
+                      element: <ExerciseCreationPage />,
                     },
                     {
                       path: "@delete",
-                      action: categoryDeletionAction,
+                      action: exerciseDeletionAction,
                     },
-
                     {
-                      path: ":uri",
+                      path: ":uriName",
                       children: [
                         {
                           index: true,
-                          id: "category",
-                          loader: CategoryLoader({ apiClient }),
-                          element: <CategoryPage />,
+                          id: "exercise",
+                          loader: exerciseLoader,
+                          element: <ExercisePage />,
                         },
-                        {
-                          path: "@new",
-                          action: ExerciseCreationAction({ apiClient }),
-                          element: <ExerciseCreationForm />,
-                        },
-                        {
-                          path: ":uriName",
-                          children: [
-                            {
-                              index: true,
-                              id: "exercise",
-                              loader: exerciseLoader,
-                              element: <ExercisePage />,
-                            },
-                            {},
-                          ],
-                        },
+                        {},
                       ],
                     },
                   ],
                 },
-                {
-                  path: "chat/",
-                  element: <ChatRoomPage />,
-                },
               ],
+            },
+            {
+              path: "chat/",
+              element: <ChatRoomPage />,
             },
           ],
         },
@@ -151,8 +144,19 @@ const router = ({ identity, setIdentity }) =>
   ]);
 
 function RenderRoot() {
-  const [identity, setIdentity] = useState({});
-  return <RouterProvider router={router({ identity, setIdentity })} />;
+  const [identity, setIdentity] = React.useState(false);
+  loggedUser({ identity, setIdentity });
+  const resetIdentityCookie = (value, options) => {
+    if (value != null)
+    {
+      cookie.save("identity", value, options);
+      loggedUser({identity, setIdentity});
+    } else {
+      cookie.remove("identity", options);
+      loggedUser({identity, setIdentity});
+    }
+  }
+  return <RouterProvider router={router({ identity, resetIdentityCookie })} />;
 }
 
 const domNode = document.getElementById("root");

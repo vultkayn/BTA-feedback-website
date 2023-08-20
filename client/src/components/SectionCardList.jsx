@@ -13,6 +13,7 @@ import {
   isExercisesSection,
   isCategoriesSection,
 } from "../common/dataFormatting";
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export function SectionResponsiveCard({
   sectionObj,
@@ -70,14 +71,6 @@ export default function SectionCardList({
 }) {
   const navigate = useNavigate();
   const [toDelete, setToDelete] = React.useState([]);
-
-  const displayFetcher = useFetcher();
-
-  useEffect(() => {
-    if (displayFetcher.state === "idle" && !displayFetcher.data) {
-      // displayFetcher.load("/some/route");
-    }
-  }, [displayFetcher]);
 
   const deleteFetcher = useFetcher();
   const handleCardDelete = (event, sectionObj) => {
@@ -139,7 +132,8 @@ export default function SectionCardList({
           <Button
             onClick={saveDeletion}
             color='error'
-            variant='outlined'>
+            variant='outlined'
+            startIcon={<DeleteIcon />}>
             <Typography>Confirm Deletion</Typography>
           </Button>
         ) : null}

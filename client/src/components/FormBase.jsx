@@ -17,7 +17,7 @@ export default function FormBase({
   method,
   endpoint,
   children,
-  apiClient,
+  client,
   reactForm = false,
   onChange = (e) => {},
   onSubmit = null,
@@ -47,6 +47,10 @@ export default function FormBase({
           url: endpoint,
           data: () => new FormData(e.target),
         };
+        const response = await client.request(request);
+        console.debug("Form response is", response);
+      } catch (err) {
+        return Promise.reject(err);
       }
     });
 

@@ -1,28 +1,38 @@
 import React, { useEffect } from "react";
-import { Outlet, redirect, useNavigate } from "react-router-dom";
+import { redirect, useNavigate } from "react-router-dom";
+import cookie from "react-cookies";
+import setupInterceptors from "./interceptors";
+import axios from "./bridge"
 
-export const AuthContext = React.createContext();
-export default function useAuth ()
-{
-  return React.useContext(AuthContext);
-}
 
-export function isLogged (identity)
-{
-  return 'univID' in identity || "email" in identity;
+
+export function loggedUser({ identity, setIdentity }) {
+  const idty = cookie.load("identity");
+  if (idty == null || typeof idty !== "object" || !idty.univID) {
+    cookie.remove("identity");
+    if (identity != null) setIdentity(null);
+    return null;
+  }
+  cookie.save("identity", idty, { maxAge: 1800 });
+  if (
+    identity == null ||
+    identity.univID !== idty.univID ||
+    identity.email !== idty.email ||
+    identity.id !== idty.id
+  )
+    setIdentity(idty);
+  return idty;
 }
 
 /* Reset identity and Send username and password to the server.
    Action of /account/login form.  */
-export const login =
-  ({ apiClient, setIdentity }) =>
+export const login = ({resetIdentityCookie}) =>
   async ({ request }) => {
     try {
       console.debug("account/login action called");
-      setIdentity({});
       const formData = await request.formData();
       const body = Object.fromEntries(formData);
-      const res = await apiClient.post("/api/auth/login", body);
+      const res = await axios.post("/api/auth/login", body);
       if (res.data && typeof res.data === "object") {
         let newIdentity = {};
         if ("univID" in res.data) newIdentity.univID = res.data.univID;
@@ -30,24 +40,22 @@ export const login =
         if ("id" in res.data) newIdentity.id = res.data.id;
 
         if (newIdentity?.univID || newIdentity?.email || newIdentity?.id)
-          setIdentity(newIdentity);
+        resetIdentityCookie(newIdentity, { maxAge: 1800 });
       }
       return redirect("/");
     } catch (error) {
-      console.error ("error in login action", error)
+      console.error("error in login action", error);
       return error.response;
     }
   };
 
 /* Disconnect the user and erase notify the server.
    Action of /account/logout button  */
-export const logout =
-  ({ apiClient, setIdentity }) =>
-  async () => {
+export const logout =  ({resetIdentityCookie}) => async () => {
     try {
-      await apiClient.get("/api/auth/logout");
-      setIdentity({});
-      return redirect("/profile");
+      await axios.get("/api/auth/logout");
+      resetIdentityCookie();
+      return redirect("/", { replace: true });
     } catch (error) {
       console.error("logout action failed with", error);
       return Promise.reject(error.response);
@@ -56,15 +64,12 @@ export const logout =
 
 /* Create a new account and automatically log into it.
    Action of /account/signup form.  */
-export const signup =
-  ({ apiClient, setIdentity }) =>
-  async ({ request }) => {
+export const signup =  async ({ request }) => {
     try {
-      setIdentity({});
       const formData = await request.formData();
       const userInfos = Object.fromEntries(formData);
-      const response = await apiClient.post("/api/auth", userInfos);
-      return response.data;
+      await axios.post("/api/auth", userInfos);
+      return redirect("/account/login", { replace: true });
     } catch (error) {
       console.error("account/signup action failed with", error);
       return Promise.reject(error.response);
@@ -72,12 +77,19 @@ export const signup =
   };
 
 /* Refresh the current user local identity from the server.  */
-export const getIdentity =
-  ({ apiClient }) =>
+export const getIdentity = ({resetIdentityCookie}) =>
   async () => {
     try {
-      const response = await apiClient.get("/api/users");
+      const response = await axios.get("/api/users");
       console.debug("'getIdentity' response is", response);
+      resetIdentityCookie(
+        {
+          univID: response.data.univID,
+          email: response.data.email,
+          id: response.data.id,
+        },
+        { maxAge: 1800 }
+      )
       return response.data;
     } catch (error) {
       console.error("getIdentity failed with", error);
@@ -88,12 +100,11 @@ export const getIdentity =
 /* Action of /profile/edit
    Update the current user profile on the server.  */
 export const updateProfile =
-  ({ apiClient }) =>
-  async ({ request, params }) => {
+  async ({ request }) => {
     try {
-      const formData = await request.formData ();
+      const formData = await request.formData();
       const updates = Object.fromEntries(formData);
-      await apiClient.put("/api/users", updates);
+      await axios.put("/api/users", updates);
       return redirect("/profile", { replace: true });
     } catch (error) {
       console.error("update failed with", error);
@@ -106,39 +117,26 @@ export const updateProfile =
 //   return "univID" in identity || "email" in identity || "id" in identity;
 // }
 
-export function AuthLayout({ apiClient, setIdentity }) {
+export function NavigateFunctional({children}) {
   const navigate = useNavigate();
-
   useEffect(() => {
-    const requestInterceptor = apiClient.interceptors.request.use((config) => {
-      if (typeof config.data === FormData) {
-        let object = {};
-        config.data.forEach((value, key) => (object[key] = value));
-        config.data = JSON.stringify(object);
-      }
-      return config;
-    });
+    setupInterceptors(navigate);
+  }, [navigate]);
 
-    const responseInterceptor = apiClient.interceptors.response.use(
-      (res) => {
-        return res;
-      },
-      (err) => {
-        if (err.status == 401 || err.status == 403) {
-          setIdentity({});
-          return navigate("/account/login", { replace: true });
-        }
-        console.error("rejecting response ", err);
-        return Promise.reject(err);
-      }
-    );
+  return <>{children}</>;
+}
 
-    return () => {
-      console.error("Ejecting intercepts");
-      apiClient.interceptors.request.eject(requestInterceptor);
-      apiClient.interceptors.response.eject(responseInterceptor);
-    };
-  }, [apiClient, setIdentity]);
+export const AuthContext = React.createContext(null);
+export default function useAuth() {
+  return React.useContext(AuthContext);
+}
 
-  return <Outlet />;
+export function IdentityProvider({identity, children}) {
+  
+  const loggedIn = identity != null;
+  return (
+    <AuthContext.Provider value={{ identity, loggedIn }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }

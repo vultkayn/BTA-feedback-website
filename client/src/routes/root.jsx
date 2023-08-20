@@ -1,10 +1,10 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import { AppBar, Toolbar, Typography, Button } from "@mui/material";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import ProfileMenu from "../components/ProfileMenu";
-import useAuth from "../bridge/AuthProvider";
 import Navbar from "../components/Navbar";
+import useAuth from "../bridge/authUtilities";
 
 const TABS = [
   {
@@ -40,8 +40,7 @@ const TABS = [
 ];
 
 export default function Root() {
-  const {identity, isLogged} = useAuth();
-  const loggedIn = isLogged(identity);
+  const {loggedIn} = useAuth();
   let tabs = TABS.filter(
     (tab) =>
       (tab.authRequired && loggedIn) ||
@@ -52,23 +51,22 @@ export default function Root() {
   console.debug("Rendering Root");
 
   return (
-    <div id='scaffold'>
-      <div id='scaffold-header'>
-        <AppBar
-          position='static'
-          color='primary'
-          sx={{
-            mb: 2,
-          }}>
-          <Toolbar>
-            <NavLink to='/'>
-              <Typography
-                variant='h4'
-                component='div'
-                textDecoration='none'>
-                BTA
-              </Typography>
-            </NavLink>
+      <div id='scaffold'>
+        <div id='scaffold-header'>
+          <AppBar
+            position='static'
+            color='primary'
+            sx={{
+              mb: 2,
+            }}>
+            <Toolbar>
+            <Button
+            variant="text"
+            component={Link}
+            to='/'
+            >
+            <Typography variant='h4' color="white">BTA</Typography>
+          </Button>
 
               <Navbar
                 textColor='inherit'
@@ -82,20 +80,20 @@ export default function Root() {
                 centered
               />
 
-            {loggedIn ? (
-              <ProfileMenu />
-            ) : (
-              <Button
-                color='inherit'
-                height='minHeight'
-                component={NavLink}
-                to='/account/login'>
-                Login
-              </Button>
-            )}
-          </Toolbar>
-        </AppBar>
-      </div>
+              {loggedIn ? (
+                <ProfileMenu />
+              ) : (
+                <Button
+                  color='inherit'
+                  height='minHeight'
+                  component={NavLink}
+                  to='/account/login'>
+                  Login
+                </Button>
+              )}
+            </Toolbar>
+          </AppBar>
+        </div>
 
         <div id='scaffold-main'>
           <Outlet />

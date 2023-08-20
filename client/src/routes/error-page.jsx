@@ -42,7 +42,7 @@ export default function ErrorPage() {
         gutterBottom
         marginBottom='10vh'
         fontFamily='Monospace'>
-        Oops! Error {error.status ?? (error?.response.status ?? "'Unknown Status'")}
+        Oops! Error {error.status ?? (error.response?.status ?? "'Unknown Status'")}
       </Typography>
       <div>
         <Typography variant='body1'>
