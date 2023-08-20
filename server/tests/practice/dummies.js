@@ -1,6 +1,7 @@
 exports.sectionsDummy = [
   {
     title: "Exercises",
+    name: "exercises",
     listing: [
       {
         uri: "memory_pointers/exo1",
@@ -30,6 +31,7 @@ exports.sectionsDummy = [
   },
   {
     title: "Subcategories",
+    name: "subcategories",
     listing: [
       { uri: "pointers", name: "pointers", solved: false, kind: 0 },
       { uri: "memory", name: "memory", solved: false, kind: 0 },

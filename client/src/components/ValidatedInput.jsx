@@ -16,7 +16,7 @@ export default function ValidatedInput({
   onFocus = (e) => {},
   ...rest
 }) {
-  const [isInvalid, setIsInvalid] = useState(! valid);
+  const [isInvalid, setIsInvalid] = useState(false);
   const [invalidTxt, setInvalidTxt] = useState("Invalid field");
 
   function handleChange(e) {
@@ -41,7 +41,7 @@ export default function ValidatedInput({
       onChange={handleChange}
       onFocus={onFocus}
       required={required}
-      error={isInvalid && valid}
+      error={isInvalid || !valid}
       helperText={helperText}
       {...rest}
     />
@@ -86,6 +86,7 @@ const emailValidator = (name, value) => {
 };
 
 export const validators = {
+  regex: (re) => (n, v) => re.test(v),
   email: emailValidator,
   password: passwordStrengthValidator,
   length: (minL, maxL) => (n, v) => v.length > minL && v.length < maxL, 

@@ -113,6 +113,7 @@ const practice = {
       .escape()
       .trim()
       .custom((v) => {
+        console.log("route validation of", v);
         if (!routeRegex.test(v)) throw new Error("invalid characters");
         return true;
       }),

@@ -4,10 +4,10 @@
   "author": "Benjamin Priour",
   "private": true,
   "scripts": {
-    "start": "NODE_ENV=development node ./bin/www",
+    "start": "NODE_ENV=production node ./bin/www",
     "_test": "NODE_ENV=test jest",
     "test": "NODE_ENV=test ../scripts/sequenceTest.sh",
-    "devstart": "NODE_ENV=test nodemon ./bin/www",
+    "devstart": "NODE_ENV=development nodemon ./bin/www",
     "serverstart": "NODE_ENV=development DEBUG=* npm run devstart"
   },
   "dependencies": {

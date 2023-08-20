@@ -8,7 +8,7 @@ import {
   Container,
   Button,
 } from "@mui/material";
-import Sidebar, { SidebarListing, makeSolvedIcon } from "../components/Sidebar";
+import Sidebar, { CollapsingSidebarSection, makeSolvedIcon } from "../components/Sidebar";
 import { useLoaderData, useOutletContext } from "react-router-dom";
 
 export const loader = (authHook) =>
@@ -259,7 +259,7 @@ export default function ExercisePage() {
           maxHeight='60vh'
           fontSize='15px'
           className='scrolling-area scroll-right'>
-          <SidebarListing
+          <CollapsingSidebarSection
             divide={false}
             makeIcon={makeSolvedIcon}
             onClick={handleClickSidebar}

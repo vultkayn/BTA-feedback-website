@@ -19,12 +19,12 @@ import {
   signup,
   getIdentity,
 } from "./bridge/AuthProvider";
-import CategoriesListingPage, {
+import PracticeRouteScaffold, {
   CategoryPage,
   ExercisePage,
 } from "./routes/practice";
 import ChatRoomPage from "./routes/chat";
-import { CategoryIndexLoader, CategoryLoader } from "./routes/category";
+import { RootCategoryLoader, CategoryLoader } from "./routes/category";
 import CategoryCreationForm, {
   action as CategoryCreationAction,
 } from "./routes/categoryCreation";
@@ -89,13 +89,13 @@ const router = ({ identity, setIdentity }) =>
                 },
                 {
                   path: "practice/",
-                  element: <CategoriesListingPage />,
+                  element: <PracticeRouteScaffold />,
                   errorElement: <ErrorPage />,
                   children: [
                     {
                       index: true,
                       id: "categoryIndex",
-                      loader: CategoryIndexLoader({ apiClient }),
+                      loader: RootCategoryLoader({ apiClient }),
                       element: <CategoryPage />,
                     },
                     {

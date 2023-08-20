@@ -3,11 +3,8 @@ const { Category } = require("../models/categoryModel");
 const { Exercise, makeExerciseURI } = require("../models/exerciseModel");
 const { Question } = require("../models/questionModel");
 const {
-  routeRegex,
-  nameRegex,
   breakdownURI,
   makeURIName,
-  nameMaxLength,
 } = require("../models/helpers/practice");
 const userModel = require("../models/userModel");
 const { checkAuth } = require("../passport/authenticate");

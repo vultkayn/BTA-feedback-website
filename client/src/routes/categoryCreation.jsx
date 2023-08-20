@@ -1,61 +1,74 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Form, { ValidatedInput, validators } from "../components/Form";
 
 import { Box, Button, TextareaAutosize } from "@mui/material";
-import { prepareRouteForServer } from "./practice";
-import { redirect, useActionData } from "react-router-dom";
+import { redirect, useActionData, useLocation } from "react-router-dom";
 
-export const action = ({apiClient}) =>
+export const action = ({ apiClient }) =>
   async function ({ request }) {
     try {
       const formData = await request.formData();
       let catData = Object.fromEntries(formData);
-      catData.kind = 0;
-      catData.uri = prepareRouteForServer({
-        uri: catData.uri,
+
+      let payload = {
         name: catData.name,
-        kind: catData.kind,
-      }).route;
-      await apiClient.request({
+        uiRoute: catData.route ?? "",
+      };
+      if (catData.description) payload.description = catData.description;
+      if (payload.uiRoute)
+        payload.uiRoute = payload.uiRoute.replace(/^\/+/, "").replaceAll("/", "-");
+      console.debug("Creating Category with payload", payload);
+      const response = await apiClient.request({
         method: "post",
         url: "/api/practice/category",
-        data: catData,
+        data: payload,
       });
-      return redirect(`/practice/${catData.uri}`);
+
+      return redirect(`/practice/${response.data.uri}`);
     } catch (error) {
-      console.debug("CategoryCreation failed with", error);
-      return error.response;
+      console.debug("CategoryCreation failed with", error.response.data);
+      if (error.status === 400 && error.response.data.errors)
+        return error.response;
+      throw error;
     }
   };
 
 // FIXME add auth requirement for this page
 export default function CategoryCreationForm() {
-  const [valids, setValids] = useState({
-    univID: true,
-    password: true,
-  });
+  const [errors, setErrors] = useState({});
+  const location = useLocation();
+  console.log ("location state is", location.state)
+  const { from } = location.state;
+
+  console.log("error fields are", errors);
 
   const err = useActionData();
-  if (err !== undefined) {
-    if (err.status == 401 && err.data.errors !== undefined) {
-      setValids({
-        name: !("name" in err.data.errors),
-        description: !("description" in err.data.errors),
-        route: !("route" in err.data.errors),
-      });
+  useEffect(() => {
+    let fieldErrors = {};
+    if (err != null) {
+      console.log("received errors are", err);
+      if (err.status == 400) {
+        if (err.data?.errors != null) {
+          fieldErrors.name = err.data.errors.name;
+          fieldErrors.description = err.data.errors.description;
+          fieldErrors.route = err.data.errors.route;
+        }
+      }
     }
-  }
+    setErrors(fieldErrors);
+  }, [err]);
+
   return (
     <Form
       method='post'
       reactForm={true}
       id='Login-form'
       sx={{
-        display:'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: "100%"
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        width: "100%",
       }}>
       <Box
         display='flex'
@@ -65,9 +78,10 @@ export default function CategoryCreationForm() {
         <ValidatedInput
           label='Name:'
           name='name'
-          validator={validators.length(1, 20)}
+          validator={validators.regex(/^[a-zA-Z0-9 _!-]{1,30}$/)}
           margin='normal'
-          valid={valids.name}
+          valid={errors.name == null}
+          helperText={errors.name ? errors.name.msg : ""}
           required
         />
         <TextareaAutosize
@@ -76,14 +90,19 @@ export default function CategoryCreationForm() {
           type='description'
           margin='normal'
           minRows={4}
-          valid={valids.description}
+          valid={errors.description == null}
+          helperText={errors.description ? errors.description.msg : ""}
         />
         <ValidatedInput
           label='Route:'
           name='route'
-          validator={validators.length(0, 40)} // FIXME add route validator
+          validator={validators.regex(
+            new RegExp("^/([a-zA-Z0-9_+]+/?[a-zA-Z0-9_+]+)*$")
+          )}
           margin='normal'
-          valid={valids.route}
+          valid={errors.route == null}
+          helperText={errors.route ? errors.route.msg : ""}
+          InputProps={{ value: from || "/" }}
           required
         />
       </Box>

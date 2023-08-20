@@ -8,7 +8,7 @@ const debug = require("debug")("server:practice");
  */
 
 const nameRegex = /^[a-zA-Z0-9-]+([ _]?[a-zA-Z0-9-]+)*$/;
-const routeRegex = /^([a-zA-Z0-9-]+[+_]?[a-zA-Z0-9-]+)*$/;
+const routeRegex = /^([a-zA-Z0-9-]+([+_]?[a-zA-Z0-9-]+)*)*$/;
 const titleRegex = /[\w ?!^.{}[\]#_,+-]{1,100}/;
 exports.nameMaxLength = 40;
 exports.nameRegex = nameRegex;
@@ -70,7 +70,7 @@ exports.makeURIRoute = function (uiRoute) {
     .replace(/_+$/, "");
 };
 
-/**
+/** KEEP IN SYNC WITH CLIENT.
  *
  * @param {String} uri The URL-friendly uri.
  *  Segments are uriNames separated by '_'.
@@ -84,7 +84,7 @@ exports.revertURI = function (uri, sep = "_") {
   if (!uri) return "";
   const { route, uriName } = exports.breakdownURI(uri, sep);
   return {
-    uiRoute: "/" + route.replaceAll("_", "/").replaceAll("+", " "),
+    uiRoute: route.replaceAll("_", "/").replaceAll("+", " "),
     name: uriName.replaceAll("+", " "),
   };
 };

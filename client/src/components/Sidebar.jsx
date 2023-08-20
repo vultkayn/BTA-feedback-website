@@ -61,7 +61,7 @@ export default function Sidebar({
   );
 }
 
-export function SidebarListing({
+export function CollapsingSidebarSection({
   title = "",
   divide = true,
   canAdd = true,

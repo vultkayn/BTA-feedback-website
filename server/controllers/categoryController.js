@@ -181,7 +181,7 @@ exports.matchCategories = [
       route: route,
       uriName: uriNamePfxRegex,
     });
-    let categories = await q
+    let categories = await query
       .select("uri name uriName route")
       .sort({ uriName: -1 })
       .limit(10)
