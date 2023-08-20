@@ -1,6 +1,6 @@
 import React from "react";
 import { Box } from "@mui/material";
-
+import "./styles/Form.css";
 import FormBase from "./FormBase";
 
 export default function Form({
@@ -10,39 +10,32 @@ export default function Form({
   reactForm = false,
   onChange = (e) => {},
   onSubmit = null,
-  onError = null,
-  toApi = true,
-  sx = {},
   BoxProps,
-  FormBaseProps
+  FormBaseProps,
 }) {
   const boxProps = {
     display: "flex",
     justifyContent: "space-around",
-    alignItems: "start",
     flexDirection: "column",
     flexWrap: "wrap",
-    width: "80px",
-    ...BoxProps
+    ...BoxProps,
   };
 
   return (
     <Box
-      component={FormBase}
-      onSubmit={onSubmit}
-      onError={onError}
-      toApi={toApi}
-      reactForm={reactForm}
-      FormBaseProps={FormBaseProps}
-      onChange={onChange}
-      endpoint={endpoint}
-      method={method}
-      sx={sx}
-      { ...boxProps}>
-      {children}
+      {...boxProps}>
+      <FormBase
+        {...FormBaseProps}
+        onSubmit={onSubmit}
+        reactForm={reactForm}
+        onChange={onChange}
+        endpoint={endpoint}
+        method={method}>
+        {children}
+      </FormBase>
     </Box>
   );
 }
 
 export { default as ValidatedInput, validators } from "./ValidatedInput";
-export { FormBase }
+export { FormBase };

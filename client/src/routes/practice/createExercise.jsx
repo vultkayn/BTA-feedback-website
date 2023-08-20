@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import Form, { ValidatedInput, validators } from "../components/Form";
+import React, { useState, useEffect } from "react";
+import Form, { ValidatedInput, validators } from "../../components/Form";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
 import {
@@ -11,26 +11,42 @@ import {
   CardContent,
 } from "@mui/material";
 import { redirect, useActionData } from "react-router-dom";
+import axios from "../../bridge/bridge";
 
-export const action = ({apiClient}) =>
-  async function ({ request, params }) {
-    try {
-      const formData = await request.formData();
-      let exoData = Object.fromEntries(formData);
-      exoData.kind = 1;
+export const action = async function ({ request, params }) {
+  try {
+    const formData = await request.formData();
+    let exoData = Object.fromEntries(formData);
+    exoData.kind = 1;
 
-      const uri = params.uri;
-      await apiClient.request({
-        method: "post",
-        url: `/api/practice/category/${uri}`,
-        data: exoData,
-      });
-      return redirect(`/practice/${uri}`);
-    } catch (error) {
-      //  console.debug("client:practice")("ExerciseCreation failed with", error);
-      return error.response;
-    }
-  };
+    const uri = params.uri;
+    await axios.request({
+      method: "post",
+      url: `/api/practice/category/${uri}`,
+      data: exoData,
+    });
+    return redirect(`/practice/${uri}`);
+  } catch (error) {
+    //  console.debug("client:practice")("ExerciseCreation failed with", error);
+    return error.response;
+  }
+};
+
+export const exerciseDeletionAction = async function ({ params }) {
+  try {
+    if (process.env.DEBUG == null)
+      console.debug("Deleting Exercise", `${params.uri}/ex/${params.uriName}`);
+    const response = await axios.request({
+      method: "delete",
+      url: `/api/practice/category/${params.uri}/ex/${params.uriName}`,
+    });
+
+    return redirect(`/practice/${response.data.uri}`);
+  } catch (error) {
+    console.debug("ExerciseDeletion failed with", error.response.data);
+    throw error;
+  }
+};
 
 function QuestionCreationField({
   qidx,
@@ -38,47 +54,47 @@ function QuestionCreationField({
   changeQuestion,
   prefilled = null,
 }) {
-  let form = prefilled ?? {};
+  let content = prefilled ?? {};
   return (
     <Card
       sx={{
         width: "min(70%, 70vw)",
         display: "flex",
         flexDirection: "column",
-        gap: "10px"
+        gap: "10px",
       }}>
       <CardContent>
         <ValidatedInput
           margin='normal'
           label='Title'
-          defaultValue={form?.title ?? ""}
+          defaultValue={content.title ?? ""}
           name={`title[${qidx}]`}
           gutterBottom
           fullWidth
         />
-        <Box width='100%' mb="15px">
-          <TextareaAutosize
-            placeholder='Statement'
-            name={`statement[${qidx}]`}
-            defaultValue={form?.statement ?? ""}
-            minRows={4}
-          />
-        </Box>
-        <Box width='100%' mb="15px">
-        <TextareaAutosize
+        <ValidatedInput
+          margin='normal'
+          label='Statement'
+          defaultValue={content.statement ?? ""}
+          name={`statement[${qidx}]`}
+          gutterBottom
+          fullWidth
+        />
+        <ValidatedInput
           placeholder='Explanation'
+          label='Explanation'
           name={`explanation[${qidx}]`}
-          defaultValue={form?.explanation ?? ""}
+          defaultValue={content.explanation ?? ""}
+          gutterBottom
           margin='normal'
           minRows={4}
-          />
-        </Box>
+        />
         <IconButton
           aria-label='add question'
           onClick={
             prefilled === null
-              ? () => addQuestion(form)
-              : () => changeQuestion(form, qidx)
+              ? () => addQuestion(content)
+              : () => changeQuestion(content, qidx)
           }>
           <AddCircleOutlineIcon fontSize='large' />
         </IconButton>
@@ -89,27 +105,30 @@ function QuestionCreationField({
 
 // FIXME add auth requirement for this page
 export default function ExerciseCreationForm() {
-  const [valids, setValids] = useState({
-    univID: true,
-    password: true,
-  });
-
+  const [errors, setErrors] = useState({});
   const [questions, setQuestions] = useState([]);
   const addQuestion = (newQ) => setQuestions([newQ, ...questions]);
   const changeQuestion = (q, idx) => {
     const oldqs = questions.filter((q, i) => i !== idx);
     setQuestions([q, ...oldqs]);
   };
+
   const err = useActionData();
-  if (err !== undefined) {
-    if (err.status == 401 && err.data.errors !== undefined) {
-      setValids({
-        name: !("name" in err.data.errors),
-        description: !("description" in err.data.errors),
-        route: !("route" in err.data.errors),
-      });
+  useEffect(() => {
+    let fieldErrors = {};
+    if (err != null) {
+      console.error("received errors are", err);
+      if (err.status === 400) {
+        if (err.data?.errors != null) {
+          fieldErrors.name = err.data.errors.name;
+          fieldErrors.description = err.data.errors.description;
+          fieldErrors.route = err.data.errors.route;
+        }
+      }
     }
-  }
+    setErrors(fieldErrors);
+  }, [err]);
+
   return (
     <Form
       method='post'
@@ -132,7 +151,7 @@ export default function ExerciseCreationForm() {
           name='name'
           validator={validators.length(1, 20)}
           margin='normal'
-          valid={valids.name}
+          valid={errors.name == null}
           required
         />
         <TextareaAutosize
@@ -140,7 +159,7 @@ export default function ExerciseCreationForm() {
           name='description'
           margin='normal'
           minRows={4}
-          valid={valids.description}
+          valid={errors.description == null}
         />
       </Box>
       {questions.map((q, idx) => {

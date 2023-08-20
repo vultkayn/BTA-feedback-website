@@ -1,5 +1,5 @@
 import React, { StrictMode, useState } from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import Root from "./routes/root";
 import ErrorPage from "./routes/error-page";
 import { LoginPage, SignupPage } from "./routes/account";
@@ -22,18 +22,18 @@ import {
 import PracticeRouteScaffold, {
   CategoryPage,
   ExercisePage,
-} from "./routes/practice";
+  CategoryCreationPage,
+  ExerciseCreationPage,
+  categoryCreationAction,
+  categoryDeletionAction,
+  exerciseCreationAction,
+  exerciseDeletionAction,
+} from "./routes/practice/practice";
 import ChatRoomPage from "./routes/chat";
-import { RootCategoryLoader, CategoryLoader } from "./routes/category";
-import CategoryCreationForm, {
-  action as CategoryCreationAction,
-} from "./routes/categoryCreation";
-import ExerciseCreationForm, {
-  action as ExerciseCreationAction,
-} from "./routes/exerciseCreation";
+import { rootCategoryLoader, categoryLoader } from "./routes/practice/category";
+import { exerciseLoader } from "./routes/practice/exercise";
 
 const apiClient = createApiClient();
-
 
 const router = ({ identity, setIdentity }) =>
   createBrowserRouter([
@@ -101,7 +101,11 @@ const router = ({ identity, setIdentity }) =>
                     {
                       path: "@new",
                       action: CategoryCreationAction({ apiClient }),
-                      element: <CategoryCreationForm />,
+                      element: <CategoryCreationPage />,
+                    },
+                    {
+                      path: "@delete",
+                      action: categoryDeletionAction,
                     },
 
                     {
@@ -119,9 +123,16 @@ const router = ({ identity, setIdentity }) =>
                           element: <ExerciseCreationForm />,
                         },
                         {
-                          path: ":id",
-                          id: "exercise",
-                          element: <ExercisePage />,
+                          path: ":uriName",
+                          children: [
+                            {
+                              index: true,
+                              id: "exercise",
+                              loader: exerciseLoader,
+                              element: <ExercisePage />,
+                            },
+                            {},
+                          ],
                         },
                       ],
                     },
@@ -144,9 +155,10 @@ function RenderRoot() {
   return <RouterProvider router={router({ identity, setIdentity })} />;
 }
 
-ReactDOM.render(
+const domNode = document.getElementById("root");
+const root = createRoot(domNode);
+root.render(
   <StrictMode>
     <RenderRoot />
-  </StrictMode>,
-  document.getElementById("root")
+  </StrictMode>
 );

@@ -5,9 +5,12 @@ import "./styles/error.css";
 import { Typography, Box } from "@mui/material";
 
 export default function ErrorPage() {
-  const error = useRouteError();
-
+  let error = useRouteError();
+  if (error.status == null)
+    error = error.response ?? error
+  console.error (error);
   if (isRouteErrorResponse(error)) {
+
     return (
       <Box id='error-page'>
         <Typography
@@ -39,7 +42,7 @@ export default function ErrorPage() {
         gutterBottom
         marginBottom='10vh'
         fontFamily='Monospace'>
-        Oops! Error {error?.status ?? "'Unknown Status'"}
+        Oops! Error {error.status ?? (error?.response.status ?? "'Unknown Status'")}
       </Typography>
       <div>
         <Typography variant='body1'>

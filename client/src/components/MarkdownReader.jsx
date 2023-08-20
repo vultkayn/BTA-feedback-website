@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, memo } from "react";
 import axios from "axios";
 
 import { Container, Skeleton, Typography, Grid } from "@mui/material";
 import DOMPurify from "dompurify";
 
-export default function MarkdownReader({ name }) {
+const MarkdownReader = memo(function MarkdownReader({ name }) {
   const [done, setDone] = useState(false);
   const [file, setFile] = useState(null);
   let html = '/pages/' + name + ".html";
@@ -27,7 +27,7 @@ export default function MarkdownReader({ name }) {
       setFile(null);
       setDone(false);
     };
-  }, [name]);
+  }, [html]);
 
   if (done === false)
     return (
@@ -64,4 +64,6 @@ export default function MarkdownReader({ name }) {
       <div dangerouslySetInnerHTML={{ __html: file }}></div>
     </Container>
   );
-}
+})
+
+export default MarkdownReader;

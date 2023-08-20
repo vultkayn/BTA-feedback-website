@@ -49,7 +49,7 @@ export default function Root() {
       (!tab.authRequired && loggedIn && !tab.authStrict)
   );
 
-  console.debug ("Rendering Root");
+  console.debug("Rendering Root");
 
   return (
     <div id='scaffold'>
@@ -70,17 +70,17 @@ export default function Root() {
               </Typography>
             </NavLink>
 
-            <Navbar
-              textColor='inherit'
-              indicatorColor='white'
-              BoxProps={{
-                sx: {
-                  width: "100%",
-                },
-              }}
-              tabs={tabs}
-              centered
-            />
+              <Navbar
+                textColor='inherit'
+                indicatorColor='white'
+                BoxProps={{
+                  sx: {
+                    width: "100%",
+                  },
+                }}
+                tabs={tabs}
+                centered
+              />
 
             {loggedIn ? (
               <ProfileMenu />
@@ -97,9 +97,9 @@ export default function Root() {
         </AppBar>
       </div>
 
-      <div id='scaffold-main'>
-        <Outlet />
+        <div id='scaffold-main'>
+          <Outlet />
+        </div>
       </div>
-    </div>
   );
 }

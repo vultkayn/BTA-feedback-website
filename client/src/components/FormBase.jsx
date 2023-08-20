@@ -1,5 +1,4 @@
 import React from "react";
-import "./styles/Form.css";
 
 import { Form as ReactForm } from "react-router-dom";
 
@@ -12,8 +11,6 @@ const FormBaseProps = {
   reactForm: false,
   onChange: (e) => {},
   onSubmit: (e) => {},
-  onError: (err) => {},
-  toApi: true,
 };
 
 export default function FormBase({
@@ -24,38 +21,41 @@ export default function FormBase({
   reactForm = false,
   onChange = (e) => {},
   onSubmit = null,
-  FormBaseProps
+  className,
+  ...FormBaseProps
 }) {
+  const klass = `FormBase ${className || ""}`
 
   if (reactForm)
     return (
       <ReactForm
         method={method}
         onChange={onChange}
+        className={klass}
         {...FormBaseProps}>
         {children}
       </ReactForm>
     );
 
-  const handleSubmit = onSubmit ?? (async (e) => {
-    try {
-      e.preventDefault();
-      const request = {
-        method: method,
-        url: endpoint,
-        data: () => new FormData(e.target)
+  const handleSubmit =
+    onSubmit ??
+    (async (e) => {
+      try {
+        e.preventDefault();
+        const request = {
+          method: method,
+          url: endpoint,
+          data: () => new FormData(e.target),
+        };
       }
-      const response = await apiClient.request(request);
-      console.debug("Form response is", response);
-    } catch (err) {
-      return Promise.reject(err);
-    }
-  });
+    });
 
   return (
     <form
       onChange={onChange}
-      onSubmit={handleSubmit}>
+      onSubmit={handleSubmit}
+      className={klass}
+      {...FormBaseProps}>
       {children}
     </form>
   );

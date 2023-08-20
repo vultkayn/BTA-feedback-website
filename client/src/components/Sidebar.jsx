@@ -3,12 +3,12 @@ import "./styles/Sidebar.css";
 
 import { Link } from "react-router-dom";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import AddIcon from "@mui/icons-material/Add";
 
 import {
   Box,
   Paper,
   Collapse,
+  Badge,
   List,
   ListItemButton,
   ListItemText,
@@ -22,7 +22,7 @@ export const makeSolvedIcon = (v, idx) => {
   return solved ? (
     <ListItemIcon sx={{ minWidth: "min-content" }}>
       {" "}
-      <CheckCircleIcon htmlColor='green' />
+      <CheckCircleIcon fontSize="small" htmlColor='green' />
     </ListItemIcon>
   ) : null;
 };
@@ -64,7 +64,6 @@ export default function Sidebar({
 export function CollapsingSidebarSection({
   title = "",
   divide = true,
-  canAdd = true,
   addTarget = "",
   content = [],
   onClick = (e, idx) => {},
@@ -108,12 +107,12 @@ export function CollapsingSidebarSection({
           const target = makeTarget(v, idx);
 
           return (
+            <Badge key={`${target}-${idx}`} badgeContent={makeIcon(v, idx)}>
             <ListItemButton
               component={Link}
               selected={selectedIndex === idx}
               sx={{ justifyContent: "space-between" }}
               onClick={(e) => handleClick(e, idx)}
-              key={`${target}-${idx}`}
               to={target}
               reloadDocument={disableRouting}>
               <ListItemText
@@ -122,23 +121,13 @@ export function CollapsingSidebarSection({
                 inset={inset}
                 sx={{ overflow: "clip" }}
               />
-              {makeIcon(v, idx)}
+              {/* {makeIcon(v, idx)} */}
             </ListItemButton>
+            </Badge>
           );
         })}
-        {canAdd ? (
-          <ListItemButton
-            component={Link}
-            sx={{ justifyContent: "center" }}
-            to={addTarget}
-            reloadDocument={disableRouting}>
-            <ListItemIcon sx={{ minWidth: "min-content" }}>
-              {" "}
-              <AddIcon htmlColor='blue' />
-            </ListItemIcon>
-          </ListItemButton>
-        ) : null}
       </Collapse>
+
     </List>
   );
 }

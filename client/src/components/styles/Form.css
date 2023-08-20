@@ -5,3 +5,7 @@ input {
 .invalid-input {
     border: 1px solid red;
 };
+
+.FormBase {
+  width: 100%;
+}

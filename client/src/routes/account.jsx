@@ -1,40 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Form, { ValidatedInput, validators } from "../components/Form";
-import { Link, useActionData, useNavigate } from "react-router-dom";
+import { Link, useActionData } from "react-router-dom";
 import { Button, Box } from "@mui/material";
-import useAuth from "../bridge/AuthProvider";
 
 export function SignupPage() {
-  // const auth = useAuth();
-  const [valids, setValids] = useState({
-    univID: true,
-    password: true,
-    firstName: true,
-    lastName: true,
-    email: true,
-    promo: true,
-  });
-
+  const [errors, setErrors] = useState({});
 
   const err = useActionData();
-  if (err !== undefined)
-    // e.preventDefault();
-    // try {
-    //   const res = await auth.signup(new FormData(e.target));
-    //   console.debug("SignupPage response:", res);
-    // } catch (err) {
-      if (err.status == 401 && err.data.errors) {
-        setValids({
-          univID: !("univID" in err.data.errors),
-          password: !("password" in err.data.errors),
-          firstName: !("firstName" in err.data.errors),
-          lastName: !("lastName" in err.data.errors),
-          email: !("email" in err.data.errors),
-          promo: !("promo" in err.data.errors),
-        });
+  useEffect(() => {
+    let fieldErrors = {};
+    if (err != null) {
+      console.log("received errors are", err);
+      if (err.status === 400) {
+        if (err.data?.errors != null) {
+          fieldErrors.univID = err.data.errors.univID;
+          fieldErrors.password = err.data.errors.password;
+          fieldErrors.firstName = err.data.errors.firstName;
+          fieldErrors.lastName = err.data.errors.lastName;
+          fieldErrors.email = err.data.errors.email;
+          fieldErrors.promo = err.data.errors.promo;
+        }
       }
-    // }
-  // };
+    }
+    setErrors(fieldErrors);
+  }, [err]);
 
   return (
     <>
@@ -49,45 +38,49 @@ export function SignupPage() {
         method='post'
         reactForm={true}
         endpoint='/api/auth/'
-        id='Signup-form'
-        >
+        id='Signup-form'>
+        <Box
+        display='flex'
+        flexDirection='column'
+        justifyContent='space-evenly'
+        maxWidth="40%">
         <ValidatedInput
           label='UnivID:'
           name='univID'
-          valid={valids.univID}
+          valid={errors.univID == null}
           validator={validators.length(1, 20)}
         />
         <ValidatedInput
           label='Password:'
           name='password'
           type='password'
-          valid={valids.password}
+          valid={errors.password == null}
           validator={validators.password}
         />
         <ValidatedInput
           label='First Name:'
           name='firstName'
-          valid={valids.firstName}
+          valid={errors.firstName == null}
           validator={validators.length(1, 15)}
         />
         <ValidatedInput
           label='Last Name:'
           name='lastName'
-          valid={valids.lastName}
+          valid={errors.lastName == null}
           validator={validators.length(1, 15)}
         />
         <ValidatedInput
           label='Email:'
           name='email'
           type='email'
-          valid={valids.email}
+          valid={errors.email == null}
           validator={validators.email}
         />
         <ValidatedInput
           label='Promo:'
           name='promo'
           type='text'
-          valid={valids.promo}
+          valid={errors.promo == null}
           validator={(n, v, setMsg) =>
             (/[0-9]{4}/.test(v) &&
               parseInt(v) >= 1990 &&
@@ -102,38 +95,29 @@ export function SignupPage() {
           type='submit'>
           Submit
         </Button>
+        </Box>
       </Form>
     </>
   );
 }
 
 export function LoginPage() {
-  // const navigate = useNavigate();
-  // const auth = useAuth();
-  const [valids, setValids] = useState({
-    univID: true,
-    password: true,
-  });
+  const [errors, setErrors] = useState({});
 
-  const err = useActionData ();
-
-  // const onSubmit = async (e) => {
-  //   e.preventDefault();
-  //   try {
-  //     const res = await auth.login(new FormData(e.target));
-  //     navigate("/home", { replace: true });
-  //   } catch (err) {
-    if (err !== undefined) {
-        console.error("LoginPage error:", err);
-        if (err.status == 401 && err.data.errors !== undefined) {
-          setValids({
-            univID: !("univID" in err.data.errors),
-            password: !("password" in err.data.errors),
-          });
+  const err = useActionData();
+  useEffect(() => {
+    let fieldErrors = {};
+    if (err != null) {
+      console.log("received errors are", err);
+      if (err.status === 400) {
+        if (err.data?.errors != null) {
+          fieldErrors.univID = err.data.errors.univID;
+          fieldErrors.password = err.data.errors.password;
         }
-      // }
+      }
     }
-  // };
+    setErrors(fieldErrors);
+  }, [err]);
 
   return (
     <Box
@@ -155,18 +139,20 @@ export function LoginPage() {
         <ValidatedInput
           label='UnivID:'
           name='univID'
+          helperText={errors.univID ? errors.univID.msg : ""}
           validator={validators.length(1, 20)}
           margin='normal'
-          valid={valids.univID}
+          valid={errors.univID == null}
           fullWidth
         />
         <ValidatedInput
           label='Password:'
           name='password'
           type='password'
+          helperText={errors.password ? errors.password.msg : ""}
           validator={validators.length(1, 30)}
           margin='normal'
-          valid={valids.password}
+          valid={errors.password == null}
           fullWidth
         />
         <Box justifySelf='right'>

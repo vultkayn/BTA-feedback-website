@@ -1,0 +1,14 @@
+{
+  "name": "common",
+  "version": "1.0.0",
+  "description": "Common utilities shared in sync by server and client",
+  "main": "dataFormatting.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "utility"
+  ],
+  "author": "Benjamin Priour",
+  "license": "ISC"
+}
