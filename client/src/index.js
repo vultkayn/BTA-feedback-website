@@ -142,6 +142,33 @@ const router = ({ identity, resetIdentityCookie }) =>
                           loader: exerciseLoader,
                           element: <ExercisePage />,
                         },
+                        {
+                          path: "@new",
+                          action: questionCreationAction,
+                        },
+                        {
+                          path: "@update",
+                          element: <ExerciseUpdatePage readOnly={true} />,
+                          children: [
+                            {
+                              path: "questions",
+                              element: <QuestionUpdater />,
+                            },
+                          ],
+                        },
+                        {
+                          path: "@delete",
+                          action: exerciseDeletionAction,
+                        },
+                        {
+                          path: ":qid",
+                          children: [
+                            {
+                              path: "@delete",
+                              action: questionDeletionAction,
+                            },
+                          ],
+                        },
                       ],
                     },
                   ],

@@ -33,6 +33,90 @@ export const exerciseLoader = async ({ params }) => {
   }
 };
 
+export const exerciseDeletionAction = async function ({ params }) {
+  try {
+    if (process.env.DEBUG != null)
+      console.debug("Deleting Exercise", `${params.uri}/ex/${params.uriName}`);
+    await axios.request({
+      method: "delete",
+      url: `/api/practice/category/${params.uri}/ex/${params.uriName}`,
+    });
+
+    return redirect(`/practice/${params.uri}`);
+  } catch (error) {
+    if (process.env.DEBUG != null)
+      console.debug("ExerciseDeletion failed with", error.response.data);
+    throw error;
+  }
+};
+
+export const questionCreationAction = async function ({ request, params }) {
+  try {
+    const formData = await request.formData();
+    let question = Object.fromEntries(formData);
+    if (process.env.DEBUG != null) console.debug("Creating Question", question);
+    await axios.request({
+      method: "post",
+      url: `/api/practice/category/${params.uri}/ex/${params.uriName}/q`,
+      data: question,
+    });
+  } catch (error) {
+    if (process.env.DEBUG != null)
+      console.debug("QuestionCreation failed with", error.response.data);
+    if (error.status === 400 && error.response.data.errors)
+      return error.response;
+    throw error;
+  }
+};
+export const questionDeletionAction = async function ({ params }) {
+  try {
+    if (process.env.DEBUG != null)
+      console.debug(
+        "Deleting Question",
+        `${params.uri}/${params.uriName}/${params.qid}`
+      );
+    const response = await axios.request({
+      method: "delete",
+      url: `/api/practice/category/${params.uri}/ex/${params.uriName}/q/${params.qid}`,
+    });
+    return response.data;
+  } catch (error) {
+    if (process.env.DEBUG != null)
+      console.debug("QuestionDeletion failed with", error.response.data);
+    if (error.status === 400 && error.response.data.errors)
+      return error.response;
+    throw error;
+  }
+};
+
+
+export function ExerciseProvider () {
+  const loaderData = useLoaderData();
+  const [exercise, setExercise] = useState({});
+  useEffect(() => {
+    console.debug("ExercisePAge: Within useEffect loaderData", loaderData);
+    if (loaderData && !loaderData.errors) {
+      setExercise({
+        route: loaderData?.route ?? "",
+        kind: 1,
+        categoryID: loaderData.category,
+        categoryURI: loaderData.categoryURI,
+        answer: loaderData.answer,
+        lastModified: loaderData.lastModified,
+        lastModifiedBy: loaderData.lastModifiedBy,
+        name: loaderData.name ?? "",
+        uri: loaderData.uri ?? "",
+        uriName: loaderData.uriName ?? "",
+        description: loaderData?.description ?? "",
+        solved: loaderData.solved ?? false,
+        questionsIDs: loaderData?.questionsIDs ?? [],
+      });
+    }
+  }, [loaderData, setExercise]);
+
+  return <Outlet context={{exercise}} />
+}
+
 function produceQContent(question) {
   const produceCheckbox = () => {
     return question.choices.list.map(({ name, label }) => {});
@@ -74,8 +158,9 @@ function QuestionCard({ question, index }) {
 }
 
 export default function ExercisePage() {
-  const exercise = useLoaderData();
-  console.debug("Exercice exercise are", exercise);
+  const {exercise} = useOutletContext();
+  const { loggedIn } = useAuth();
+  console.debug("Exercise is", exercise);
 
   const handleClickSidebar = (e, idx) => {
     console.debug("click sidebar on", idx);
@@ -85,61 +170,100 @@ export default function ExercisePage() {
       if (element) element.scrollIntoView({ behavior: "smooth" });
     }
   };
-
   return (
     <Box
       display='flex'
       width='100%'
       flexDirection='row'
+
       gap='20px'
       marginBottom='40px'>
-      <Box
-        display='flex'
-        width='100%'
-        flexDirection='column'
-        alignItems='center'
-        gap='70px'>
-        {exercise.questionsIDs.map((q, idx) => {
-          return (
-            <QuestionCard
-              key={q.id}
-              question={q}
-              index={idx}
+        <Box width="100%">
+        <Box
+          flexDirection='row'
+          display='flex'
+          justifyContent='space-between'>
+          <Typography
+            gutterBottom
+            mb={10}
+            align='left'
+            variant='h3'>
+            {exercise?.name}
+          </Typography>
+          {loggedIn ? (
+            <Button
+              component={Link}
+              to='@update/questions'
+              sx={{
+                flexBasis: "fit-content",
+                marginRight: "5vw",
+                height: "min-content",
+              }}
+              variant='contained' color="secondary">
+              <Typography variant='button'>Update Exercise</Typography>
+            </Button>
+          ) : null}
+        </Box>
+        <Box>
+          <Typography
+            paragraph
+            gutterBottom
+            mb={5}
+            ml={5}
+            variant='body1'
+            align='left'>
+            {exercise?.description}
+          </Typography>
+          <Box
+            display='flex'
+            width='100%'
+            flexDirection='column'
+            alignItems='center'
+            gap='70px'>
+            {exercise?.questionsIDs &&
+              exercise.questionsIDs.map((q, idx) => {
+                return (
+                  <QuestionCard
+                    key={q._id}
+                    question={q}
+                    index={idx}
+                  />
+                );
+              })}
+          </Box>
+          </Box>
+        </Box>
+        <Box
+          width='min(15%, 10vw)'
+          display='flex'
+          flexDirection='column'
+          alignItems='center'
+          gap='20px'>
+          <FormControl>
+            <Button
+              type='submit'
+              color='error'
+              variant='outlined'>
+              Reset
+            </Button>
+          </FormControl>
+          <Sidebar
+            variant='outlined'
+            width='100%'
+            maxHeight='60vh'
+            fontSize='15px'
+            className='scrolling-area scroll-right'>
+            <CollapsingSidebarSection
+              divide={false}
+              makeIcon={makeSolvedIcon}
+              onClick={handleClickSidebar}
+              makeText={(v, idx) => `Question ${idx + 1}`}
+              makeTarget={(v, idx) => `#q-${idx}`}
+              content={exercise?.questionsIDs}
+              disableRouting={true}
             />
-          );
-        })}
+          </Sidebar>
+        </Box>
       </Box>
-      <Box
-        width='min(15%, 10vw)'
-        display='flex'
-        flexDirection='column'
-        alignItems='center'
-        gap='20px'>
-        <FormControl>
-          <Button
-            type='submit'
-            color='error'
-            variant='outlined'>
-            Reset
-          </Button>
-        </FormControl>
-        <Sidebar
-          variant='outlined'
-          width='100%'
-          maxHeight='60vh'
-          fontSize='15px'
-          className='scrolling-area scroll-right'>
-          <CollapsingSidebarSection
-            divide={false}
-            makeIcon={makeSolvedIcon}
-            onClick={handleClickSidebar}
-            makeText={(v, idx) => `Question ${idx + 1}`}
-            makeTarget={(v, idx) => `#q-${idx}`}
-            content={exercise.questionsIDs}
-            disableRouting={true}
-          />
-        </Sidebar>
-      </Box>
-    </Box>
   );
 }

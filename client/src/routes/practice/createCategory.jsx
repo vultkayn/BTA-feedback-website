@@ -5,10 +5,8 @@ import { Box, Button, Typography } from "@mui/material";
 import {
   redirect,
   useActionData,
-  useFetcher,
   useLocation,
 } from "react-router-dom";
-import { useRef } from "react";
 import { revertURI } from "../../common/dataFormatting";
 import "./styles/CategoryCreation.css";
 import axios from "../../bridge/bridge"
@@ -60,7 +58,6 @@ export const categoryDeletionAction = async function ({ params }) {
 // FIXME add auth requirement for this page
 export default function CategoryCreationForm() {
   const [errors, setErrors] = useState({});
-  const routeRef = useRef(null);
   const location = useLocation();
   const { uiRoute: fromRoute, name: fromName } = revertURI(
     location.state?.from,
@@ -83,7 +80,6 @@ export default function CategoryCreationForm() {
     setErrors(fieldErrors);
   }, [err]);
 
-  const fetcher = useFetcher();
 
   return (
     <Box>
@@ -137,9 +133,7 @@ export default function CategoryCreationForm() {
           error={errors.route != null}
           helperText={errors.route ? errors.route.msg : ""}
           InputProps={{ defaultValue: from || "/" }}
-          inputRef={routeRef}
           required
-          gutterBottom
         />
         <Box
           alignSelf='end'

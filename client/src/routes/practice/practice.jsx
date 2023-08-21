@@ -178,7 +178,12 @@ export default function PracticeRouteScaffold() {
   );
 }
 
-export { default as ExercisePage } from "./exercise";
+export {
+  default as ExercisePage,
+  exerciseDeletionAction,
+  questionCreationAction,
+  questionDeletionAction,
+} from "./exercise";
 export { default as CategoryPage } from "./category";
 export {
   default as CategoryCreationPage,
