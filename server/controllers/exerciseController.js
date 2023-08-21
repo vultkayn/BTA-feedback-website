@@ -2,10 +2,7 @@ const { Attempt } = require("../models/attemptModel");
 const { Category } = require("../models/categoryModel");
 const { Exercise, makeExerciseURI } = require("../models/exerciseModel");
 const { Question } = require("../models/questionModel");
-const {
-  breakdownURI,
-  makeURIName,
-} = require("../models/helpers/practice");
+const { breakdownURI, makeURIName } = require("../models/helpers/practice");
 const userModel = require("../models/userModel");
 const { checkAuth } = require("../passport/authenticate");
 const { validateSanitization } = require("../sanitizers");
@@ -34,7 +31,6 @@ async function getExoDoc(req, { lean = false, leanOptions }) {
     uriName: req.params.uriName,
   }).exec();
 }
-
 
 /**
  * Lightweight fetch of an Exercise information
@@ -437,7 +433,94 @@ exports.addQuest = [
     updatedQ.push(qdoc._id);
     exercise.questionsIDs = updatedQ;
     await exercise.save();
-    return res.json({qid: qdoc._id});
+    return res.json({ qid: qdoc._id });
+  },
+];
+
+/**
+ * Update a Question into an Exercise.
+ *
+ * REQUESTS
+ *  PARAMETERS
+ *   :uri | The category's uri.
+ *   :uriName | The URL-friendly name of the exercise.
+ *   :qid | The question's id.
+ *  BODY
+ *   title NotEmpty Optional
+ *    A concise header title of the question.
+ *   statement NotEmpty Optional
+ *    A medium-sized statement to explain the question.
+ *   explanation NotEmpty Optional
+ *    An explanation to show to the user upon answering the question.
+ *   language NotEmpty Enum Optional
+ *    Comes in pair with body.languageSnippet. The language of the snippet.
+ *   languageSnippet NotEmpty Optional
+ *    A code block that accompanies the question statement.
+ *   choices NotEmpty Optional Object
+ *    choices.format NotEmpty Optional Enum("radio", "checkbox")
+ *     Format of the choices
+ *    choices.list NotEmpty Array
+ *     A list of potential answers to the question.
+ *      choices.list[].name NotEmpty
+ *        The form's name of the answer that will be later used for recognition.
+ *      choices.list[].label Defined
+ *        A label to show up next to the choice in a form.
+ *      choices.list[].answer Boolean
+ *        Whether the right answer to this choice is true or false.
+ *
+ * RESPONSE
+ *  200
+ *
+ * ERRORS
+ *  404 | category not found
+ *  404 | exercise not found
+ *  404 | question not found
+ *
+ */
+exports.updateQuest = [
+  checkAuth(),
+  // FIXME Validation optional of : body().custom((req) => questionCustomValidator(req)),
+  validateSanitization,
+
+  async (req, res, next) => {
+    const category = await Category.findOne(
+      breakdownURI(req.params.uri)
+    )?.lean();
+    if (category == null)
+      return res.status(404).json({ errors: "category not found" });
+
+    let exercise = await Exercise.findOne({
+      category: category._id,
+      uriName: req.params.uriName,
+    }).exec();
+    if (exercise == null)
+      return res.status(404).json({ errors: "exercise not found" });
+
+    if (!exercise.questionsIDs.includes(req.params.qid))
+      return res.status(404).json({ errors: "question not found" });
+
+    let question = await Question.findById(req.params.qid).exec();
+    if (question == null)
+      // FIXME should therefore remove it from exercise as we detected it was part of it
+      return res.status(404).json({ errors: "question not found" });
+
+    exercise.lastModifiedBy = req.user.id;
+    exercise.lastModified = Date.now;
+
+    if (req.body.title) question.title = req.body.title;
+    if (req.body.statement) question.statement = req.body.statement;
+    if (req.body.explanation) question.explanation = req.body.explanation;
+    if (req.body.choices) question.choices = req.body.choices;
+    if (req.body.language) question.language = req.body.language;
+    if (req.body.languageSnippet)
+      question.languageSnippet = req.body.languageSnippet;
+    try {
+      await question.save();
+      await exercise.save();
+      return res.sendStatus(200);
+    } catch (error) {
+      return res.status(500).json({ errors: "update failed" });
+    }
   },
 ];
 
@@ -455,7 +538,7 @@ exports.dropQuest = [
     let exercise = await Exercise.findOne({
       category: category._id,
       uriName: req.params.uriName,
-    }).exec();
+    }).lean();
     if (exercise == null)
       return res.status(404).json({ errors: "exercise not found" });
 

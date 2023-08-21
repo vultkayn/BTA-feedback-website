@@ -15,5 +15,6 @@ router.put("/:uriName", exerciseCtrl.update);
 router.get("/:uriName/questions", exerciseCtrl.questions);
 router.post("/:uriName/q", exerciseCtrl.addQuest);
 router.delete("/:uriName/q/:qid", exerciseCtrl.dropQuest);
+router.put("/:uriName/q/:qid", exerciseCtrl.updateQuest);
 
 module.exports = router;
