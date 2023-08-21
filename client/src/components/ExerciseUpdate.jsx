@@ -173,7 +173,7 @@ const QuestionFormCard = forwardRef(function QuestionFormCard(
         <ValidatedInput
           margin='normal'
           label='Title'
-          defaultValue={question?.title ?? ""}
+          value={question?.title ?? ""}
           onChange={onChange("title")}
           validator={validators.length(1, 20)}
           name={`title[${qidx}]`}
@@ -183,7 +183,7 @@ const QuestionFormCard = forwardRef(function QuestionFormCard(
         <ValidatedInput
           margin='normal'
           label='Statement'
-          defaultValue={question?.statement ?? ""}
+          value={question?.statement ?? ""}
           validator={validators.length(1, 100)}
           name={`statement[${qidx}]`}
           onChange={onChange("statement")}
@@ -196,7 +196,7 @@ const QuestionFormCard = forwardRef(function QuestionFormCard(
         label='Explanation'
         name={`explanation[${qidx}]`}
         onChange={onChange("explanation")}
-        defaultValue={question?.explanation ?? ""}
+        value={question?.explanation ?? ""}
         margin='normal'
         minRows={4}
         multiline

@@ -5,6 +5,29 @@ import axios from "../../bridge/bridge";
 import { QuestionAddingList } from "../../components/ExerciseUpdate";
 import { questionDeletionAction } from "./exercise";
 
+const createQuestion = async (question, { params }) => {
+  if (!Array.isArray(question?.choices?.list)) return;
+  if (!question?.title) return;
+  if (!question?.statement) return;
+  if (!question?.explanation) return;
+  let lastChoice = question.choices.list[question.choices.list.length - 1];
+  if (!lastChoice.label || !lastChoice.name)
+    question.choices.list.splice(question.choices.list.length - 1, 1);
+  try {
+    if (process.env.DEBUG != null) console.debug("Creating Question", question);
+    const response = await axios.request({
+      method: "post",
+      url: `/api/practice/category/${params.uri}/ex/${params.uriName}/q`,
+      data: question,
+    });
+    question._id = response.data.qid;
+  } catch (error) {
+    if (process.env.DEBUG != null)
+      console.debug("QuestionCreation failed with", error.response.data);
+    throw error;
+  }
+};
+
 export default function QuestionUpdater() {
   let context = useOutletContext();
   const params = useParams();
@@ -12,27 +35,14 @@ export default function QuestionUpdater() {
   const [lastQuestion, setLastQuestion] = useState({});
 
   let handleNew = async (e) => {
-    console.log("handling new of", lastQuestion)
-    let question = {...lastQuestion};
-    if (!Array.isArray(question?.choices?.list)) return;
-    if (!question?.title) return;
-    if (!question?.statement) return;
-    if (!question?.explanation) return;
-    question.choices.list.splice(question.choices.list.length-1, 1); 
+    console.log("handling new of", lastQuestion);
+    let question = { ...lastQuestion };
     try {
-      if (process.env.DEBUG != null)
-        console.debug("Creating Question", question);
-      const response = await axios.request({
-        method: "post",
-        url: `/api/practice/category/${params.uri}/ex/${params.uriName}/q`,
-        data: question,
-      });
-      question._id = response.data.qid;
+      await createQuestion(question, { params });
       setQuestions(questions.concat([question]));
       setLastQuestion({});
     } catch (error) {
-      if (process.env.DEBUG != null)
-        console.debug("QuestionCreation failed with", error.response.data);
+      return;
     }
   };
 
@@ -41,13 +51,14 @@ export default function QuestionUpdater() {
   }, [context]);
 
   const handleDrop = (idx) => async (e) => {
-    if (idx === -1)
-      return setLastQuestion({})
-    
+    if (idx === -1) return setLastQuestion({});
+    console.log("dropping", idx);
+    console.log("questions are", questions);
+    if (idx < 0) throw new Error("invalid question idx");
     let question = questions[idx];
-    if (idx < 0 || question._id == null) return;
+    if (question?._id == null) throw new Error("question must have _id");
     try {
-      await questionDeletionAction({ ...params, qid: question._id });
+      await questionDeletionAction({ params: {...params, qid: question._id} });
       let newQ = [...questions];
       newQ.splice(idx, 1);
       setQuestions(newQ);
@@ -61,8 +72,7 @@ export default function QuestionUpdater() {
     }
   };
 
-  const handleClickAway = (question) => async (e) => {
-  };
+  const handleClickAway = (question) => async (e) => {};
 
   return (
     <QuestionAddingList
