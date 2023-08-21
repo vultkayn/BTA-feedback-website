@@ -417,7 +417,7 @@ export const ExerciseCreationForm = React.forwardRef(
               readOnly: readOnly,
             }}
             {...labelProp("Name")}
-            {...defaultValueProp(exercise.name)}
+            {...defaultValueProp(exercise?.name)}
           />
           <ValidatedInput
             multiline
@@ -433,7 +433,7 @@ export const ExerciseCreationForm = React.forwardRef(
             InputProps={{
               readOnly: readOnly,
             }}
-            {...defaultValueProp(exercise.description)}
+            {...defaultValueProp(exercise?.description)}
             {...labelProp("Description")}
           />
           <Button
