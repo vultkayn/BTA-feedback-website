@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import "./styles/Form.css";
 import FormBase from "./FormBase";
 
-export default function Form({
+const Form = React.forwardRef(function Form({
   method,
   endpoint,
   children,
@@ -12,7 +12,7 @@ export default function Form({
   onSubmit = null,
   BoxProps,
   FormBaseProps,
-}) {
+}, ref) {
   const boxProps = {
     display: "flex",
     justifyContent: "space-around",
@@ -30,12 +30,14 @@ export default function Form({
         reactForm={reactForm}
         onChange={onChange}
         endpoint={endpoint}
-        method={method}>
+        method={method}
+        ref={ref}>
         {children}
       </FormBase>
     </Box>
   );
-}
+})
 
+export default Form;
 export { default as ValidatedInput, validators } from "./ValidatedInput";
 export { FormBase };

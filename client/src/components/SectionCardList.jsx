@@ -13,20 +13,22 @@ import {
   isExercisesSection,
   isCategoriesSection,
 } from "../common/dataFormatting";
-import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteIcon from "@mui/icons-material/Delete";
+import ResponsiveFunction from "./ResponsiveFunctions";
 
 export function SectionResponsiveCard({
+  fetcherData,
   sectionObj,
   addDeleteListener = false,
   ...CardListCardProps
 }) {
-  const fetcher = useFetcher();
+  /*   const fetcher = useFetcher();
   useEffect(() => {
     if (fetcher.state === "idle" && !fetcher.data) {
-      console.debug ("attempt to load", "/practice/" + sectionObj.uri);
-      fetcher.load("/practice/" + sectionObj.uri);
+      console.debug ("attempt to load", "/practice/" + sectionObj.uri + "?index");
+      fetcher.load("/practice/" + sectionObj.uri + "?index");
     }
-  }, [fetcher, sectionObj]);
+  }, [fetcher, sectionObj]); */
 
   const displayDispatcher = ({ kind, data }) => {
     switch (kind) {
@@ -52,7 +54,7 @@ export function SectionResponsiveCard({
         return null;
     }
   };
-  sectionObj.description ??= fetcher.data?.description;
+  sectionObj.description ??= fetcherData?.description;
   return (
     <CardListCard
       data={sectionObj}
@@ -140,16 +142,29 @@ export default function SectionCardList({
       </Box>
       {section.listing.length ? (
         section.listing.map((sectionObj, idx) => (
-          <SectionResponsiveCard
+          <ResponsiveFunction
             key={`card${idx}`}
-            addDeleteListener={addDeleteListener}
-            onDelete={handleCardDelete}
-            onDeleteCancel={handleDeleteCancel}
-            onTouch={handleTouch}
-            sectionObj={sectionObj}
-            dense
-            {...CardListCardProps}
-          />
+            fetchFunction={(fetcher) => {
+              if (fetcher.state === "idle" && !fetcher.data) {
+                console.debug(
+                  "attempt to load",
+                  "/practice/" + sectionObj.uri + "?index"
+                );
+                console.log("Attempt to fetch sectionObj", sectionObj)
+                fetcher.load("/practice/" + sectionObj.uri + "?index");
+              }
+            }}>
+            <SectionResponsiveCard
+              key={`card${idx}`}
+              addDeleteListener={addDeleteListener}
+              onDelete={handleCardDelete}
+              onDeleteCancel={handleDeleteCancel}
+              onTouch={handleTouch}
+              sectionObj={sectionObj}
+              dense
+              {...CardListCardProps}
+            />
+          </ResponsiveFunction>
         ))
       ) : (
         <Typography variant='caption'>No elements were found.</Typography>

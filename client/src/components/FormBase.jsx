@@ -13,7 +13,7 @@ const FormBaseProps = {
   onSubmit: (e) => {},
 };
 
-export default function FormBase({
+const FormBase = React.forwardRef(function FormBase({
   method,
   endpoint,
   children,
@@ -23,7 +23,7 @@ export default function FormBase({
   onSubmit = null,
   className,
   ...FormBaseProps
-}) {
+}, ref) {
   const klass = `FormBase ${className || ""}`
 
   if (reactForm)
@@ -32,6 +32,7 @@ export default function FormBase({
         method={method}
         onChange={onChange}
         className={klass}
+        ref={ref}
         {...FormBaseProps}>
         {children}
       </ReactForm>
@@ -59,8 +60,11 @@ export default function FormBase({
       onChange={onChange}
       onSubmit={handleSubmit}
       className={klass}
+      ref={ref}
       {...FormBaseProps}>
       {children}
     </form>
   );
-}
+})
+
+export default FormBase;
