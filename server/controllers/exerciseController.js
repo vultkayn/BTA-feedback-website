@@ -363,6 +363,45 @@ exports.update = [
   },
 ];
 
+/**
+ * Insert a new Question into an Exercise.
+ *
+ * REQUESTS
+ *  PARAMETERS
+ *   :uri | The category's uri.
+ *   :uriName | The URL-friendly name of the exercise.
+ *  BODY
+ *   title NotEmpty
+ *    A concise header title of the question.
+ *   statement NotEmpty
+ *    A medium-sized statement to explain the question.
+ *   explanation NotEmpty
+ *    An explanation to show to the user upon answering the question.
+ *   language NotEmpty Enum Optional
+ *    Comes in pair with body.languageSnippet. The language of the snippet.
+ *   languageSnippet NotEmpty Optional
+ *    A code block that accompanies the question statement.
+ *   choices NotEmpty Object
+ *    choices.format NotEmpty Enum("radio", "checkbox")
+ *     Format of the choices
+ *    choices.list NotEmpty Array
+ *     A list of potential answers to the question.
+ *      choices.list[].name NotEmpty
+ *        The form's name of the answer that will be later used for recognition.
+ *      choices.list[].label Defined
+ *        A label to show up next to the choice in a form.
+ *      choices.list[].answer Boolean
+ *        Whether the right answer to this choice is true or false.
+ *
+ * RESPONSE
+ *  qid
+ *
+ *
+ * ERRORS
+ *  404 | category not found
+ *  404 | exercise not found
+ *
+ */
 exports.addQuest = [
   checkAuth(),
   body().custom((req) => questionCustomValidator(req)),
@@ -398,7 +437,7 @@ exports.addQuest = [
     updatedQ.push(qdoc._id);
     exercise.questionsIDs = updatedQ;
     await exercise.save();
-    return res.sendStatus(200);
+    return res.json({qid: qdoc._id});
   },
 ];
 

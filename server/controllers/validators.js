@@ -62,7 +62,7 @@ const practice = {
     };
   },
   questionsValidator: body("questions")
-    .isArray({ min: 1 })
+    .isArray()
     .custom((questions) => {
       for (let q of questions) {
         questionCustomValidator(q);
