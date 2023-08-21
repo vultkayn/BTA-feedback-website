@@ -13,7 +13,7 @@ export function loggedUser({ identity, setIdentity }) {
     if (identity != null) setIdentity(null);
     return null;
   }
-  cookie.save("identity", idty, { maxAge: 1800 });
+  cookie.save("identity", idty, { maxAge: 1800, path: "/" });
   if (
     identity == null ||
     identity.univID !== idty.univID ||
@@ -117,11 +117,11 @@ export const updateProfile =
 //   return "univID" in identity || "email" in identity || "id" in identity;
 // }
 
-export function NavigateFunctional({children}) {
+export function NavigateFunctional({children, resetIdentityCookie}) {
   const navigate = useNavigate();
   useEffect(() => {
-    setupInterceptors(navigate);
-  }, [navigate]);
+    setupInterceptors(navigate, resetIdentityCookie);
+  }, [navigate, resetIdentityCookie]);
 
   return <>{children}</>;
 }

@@ -37,6 +37,16 @@ const TABS = [
       to: "/chat",
     },
   },
+  {
+    authRequired: false,
+    authStrict: false,
+    key: "4",
+    props: {
+      value: "4",
+      label: "Bugs",
+      to: "/bugs",
+    },
+  },
 ];
 
 export default function Root() {

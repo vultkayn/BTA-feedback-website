@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Card,
   Box,
@@ -11,14 +11,15 @@ import Sidebar, {
   CollapsingSidebarSection,
   makeSolvedIcon,
 } from "../../components/Sidebar";
-import { useLoaderData } from "react-router-dom";
-import axios from "../../bridge/bridge"
+import { useLoaderData, redirect, Link, Outlet, useOutletContext } from "react-router-dom";
+import axios from "../../bridge/bridge";
+import useAuth from "../../bridge/authUtilities";
 
 export const exerciseLoader = async ({ params }) => {
   try {
     const res = await axios.request({
       method: "get",
-      url: `/api/practice/category/${params.uri}/ex/${params.uriName}`,
+      url: `/api/practice/category/${params.uri}/ex/${params.uriName}?full`,
     });
     if (process.env.DEBUG != null)
       console.debug("ExerciseLoader received data", res?.data);
@@ -34,18 +35,18 @@ export const exerciseLoader = async ({ params }) => {
 
 function produceQContent(question) {
   const produceCheckbox = () => {
-    return question.choices.arr.map(({ name, label }) => {});
+    return question.choices.list.map(({ name, label }) => {});
   };
 
   const produceRadio = () => {
-    return question.choices.arr.map(({ name, label }) => {});
+    return question.choices.list.map(({ name, label }) => {});
   };
 
-  const type = question.choices.type;
+  const format = question.choices.format;
   const producer =
-    type === "checkbox"
+    format === "checkbox"
       ? produceCheckbox
-      : type === "radio"
+      : format === "radio"
       ? produceRadio
       : null;
 
@@ -65,7 +66,7 @@ function QuestionCard({ question, index }) {
           gutterBottom>
           {`#${index + 1} ${question.title}`}
         </Typography>
-        <Typography variant='body2'>{question.subject}</Typography>
+        <Typography variant='body2'>{question.statement}</Typography>
         {produceQContent(question)}
       </CardContent>
     </Card>

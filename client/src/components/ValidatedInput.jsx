@@ -12,24 +12,23 @@ export default function ValidatedInput({
   type = "text",
   helperText = "",
   required = true,
-  error = true,
+  error = false,
   onFocus = (e) => {},
   ...TextFieldProps
 }) {
   const [isInvalid, setIsInvalid] = useState(false);
-  const [invalidTxt, setInvalidTxt] = useState("Invalid field");
-
+  const [invalidTxt, setInvalidTxt] = useState("");
   function handleChange(e) {
-    e.preventDefault();
+    // e.preventDefault();
     if (!bubbleUp) e.stopPropagation();
     let invalid = required && e.target.value.length < 1;
     invalid =
       invalid ||
       validator(e.target.name, e.target.value, setInvalidTxt) === false;
     setIsInvalid(invalid);
-    helperText = isInvalid && invalidTxt ? invalidTxt : helperText;
   }
 
+  let tooltip = isInvalid && invalidTxt ? invalidTxt : helperText;
   return (
     <TextField
       name={name}
@@ -41,7 +40,7 @@ export default function ValidatedInput({
       onFocus={onFocus}
       required={required}
       error={isInvalid || error}
-      helperText={helperText}
+      helperText={tooltip}
       {...TextFieldProps}
     />
   );
@@ -91,9 +90,10 @@ export const validators = {
   email: regexValidator(/(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/,
     "invalid email format"),
   password: passwordStrengthValidator,
-  length: (minL, maxL, msg) => (n, v, setMsg) => {
-    if (v.length > minL && v.length < maxL) return true;
-    if (msg) setMsg(msg);
+  length: (minL, maxL) => (n, v, setMsg) => {
+    let value = v.trim()
+    if (value.length >= minL && value.length <= maxL) return true;
+    setMsg(`Length must be between ${minL ?? 0} and ${maxL ?? 'inf'}`);
     return false;
   },
 };

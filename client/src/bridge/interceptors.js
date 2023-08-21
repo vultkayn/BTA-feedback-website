@@ -1,7 +1,6 @@
 import axios from "./bridge"
-import cookie from "react-cookies";
 
-export default function setupInterceptors(navigate) {
+export default function setupInterceptors(navigate, resetIdentityCookie) {
 
     const requestInterceptor = axios.interceptors.request.use((config) => {
       if (typeof config.data === FormData) {
@@ -19,8 +18,7 @@ export default function setupInterceptors(navigate) {
       (err) => {
         console.error ("responseInterceptor got error", err)
         if (err.response.status === 401 || err.response.status === 403) {
-          cookie.remove("identity");
-          return navigate("/account/login", { replace: true });
+          return navigate("/account/logout", { replace: true });
         }
         console.error("rejecting response ", err);
         return Promise.reject(err);

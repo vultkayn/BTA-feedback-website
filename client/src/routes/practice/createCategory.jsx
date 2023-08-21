@@ -33,7 +33,8 @@ export const action = async function ({ request }) {
 
     return redirect(`/practice/${response.data.uri}`);
   } catch (error) {
-    console.debug("CategoryCreation failed with", error.response.data);
+    if (process.env.DEBUG != null)
+      console.debug("CategoryCreation failed with", error.response.data);
     if (error.status === 400 && error.response.data.errors)
       return error.response;
     throw error;

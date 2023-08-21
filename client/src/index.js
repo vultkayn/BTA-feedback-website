@@ -2,13 +2,18 @@ import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import Root from "./routes/root";
 import ErrorPage from "./routes/error-page";
-import { LoginPage, SignupPage } from "./routes/account";
+import SignupPage from "./routes/signup";
+import LoginPage from "./routes/login";
 import { ProfilePage, EditProfilePage } from "./routes/profile";
 import Home from "./routes/home";
 import "./index.css";
 import cookie from "react-cookies";
 
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Navigate,
+} from "react-router-dom";
 import {
   updateProfile,
   login,
@@ -24,21 +29,25 @@ import PracticeRouteScaffold, {
   ExercisePage,
   CategoryCreationPage,
   ExerciseCreationPage,
+  ExerciseUpdatePage,
   categoryCreationAction,
   categoryDeletionAction,
   exerciseCreationAction,
   exerciseDeletionAction,
+  questionCreationAction,
+  questionDeletionAction,
 } from "./routes/practice/practice";
 import ChatRoomPage from "./routes/chat";
 import { rootCategoryLoader, categoryLoader } from "./routes/practice/category";
-import { exerciseLoader } from "./routes/practice/exercise";
+import { exerciseLoader, ExerciseProvider } from "./routes/practice/exercise";
+import QuestionUpdater from "./routes/practice/questions";
 
 const router = ({ identity, resetIdentityCookie }) =>
   createBrowserRouter([
     {
       path: "/",
       element: (
-        <NavigateFunctional>
+        <NavigateFunctional resetIdentityCookie={resetIdentityCookie}>
           <IdentityProvider identity={identity}>
             <Root />
           </IdentityProvider>
@@ -56,7 +65,7 @@ const router = ({ identity, resetIdentityCookie }) =>
             },
             {
               path: "account/login",
-              action: login({resetIdentityCookie}),
+              action: login({ resetIdentityCookie }),
               element: <LoginPage />,
             },
             {
@@ -66,12 +75,18 @@ const router = ({ identity, resetIdentityCookie }) =>
             },
             {
               path: "account/logout",
-              action: logout({resetIdentityCookie}),
+              action: logout({ resetIdentityCookie }),
+              element: (
+                <Navigate
+                  to='/'
+                  replace={true}
+                />
+              ),
             },
             {
               path: "profile/",
               id: "profile",
-              loader: getIdentity({resetIdentityCookie}),
+              loader: getIdentity({ resetIdentityCookie }),
               element: <ProfilePage />,
               children: [
                 {
@@ -82,7 +97,7 @@ const router = ({ identity, resetIdentityCookie }) =>
               ],
             },
             {
-              path: "practice/",
+              path: "practice",
               element: <PracticeRouteScaffold />,
               errorElement: <ErrorPage />,
               children: [
@@ -97,17 +112,16 @@ const router = ({ identity, resetIdentityCookie }) =>
                   action: categoryCreationAction,
                   element: <CategoryCreationPage />,
                 },
-                {
-                  path: "@delete",
-                  action: categoryDeletionAction,
-                },
 
                 {
                   path: ":uri",
                   id: "category",
-                  loader: categoryLoader,
-                  element: <CategoryPage />,
                   children: [
+                    {
+                      index: true,
+                      loader: categoryLoader,
+                      element: <CategoryPage />,
+                    },
                     {
                       path: "@new",
                       action: exerciseCreationAction,
@@ -115,18 +129,19 @@ const router = ({ identity, resetIdentityCookie }) =>
                     },
                     {
                       path: "@delete",
-                      action: exerciseDeletionAction,
+                      action: categoryDeletionAction,
                     },
                     {
                       path: ":uriName",
+                      loader: exerciseLoader,
+                      element: <ExerciseProvider />,
+                      id: "exercise",
                       children: [
                         {
                           index: true,
-                          id: "exercise",
                           loader: exerciseLoader,
                           element: <ExercisePage />,
                         },
-                        {},
                       ],
                     },
                   ],
@@ -147,15 +162,23 @@ function RenderRoot() {
   const [identity, setIdentity] = React.useState(false);
   loggedUser({ identity, setIdentity });
   const resetIdentityCookie = (value, options) => {
-    if (value != null)
-    {
+    options ??= {};
+    options.path ??= "/";
+    options.sameSite ??= "strict";
+    options.maxAge ??= 1800;
+    if (value != null) {
       cookie.save("identity", value, options);
-      loggedUser({identity, setIdentity});
+      loggedUser({ identity, setIdentity });
     } else {
       cookie.remove("identity", options);
-      loggedUser({identity, setIdentity});
+      loggedUser({ identity, setIdentity });
     }
-  }
+  };
+  React.useLayoutEffect(() => {
+    loggedUser({ identity, setIdentity });
+    return () => {};
+  }, []);
+
   return <RouterProvider router={router({ identity, resetIdentityCookie })} />;
 }
 

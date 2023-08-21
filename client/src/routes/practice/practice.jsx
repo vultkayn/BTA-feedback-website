@@ -26,6 +26,7 @@ function CategorySidebarSection({
   showInsertButton = false,
   section,
   currentURI,
+  sx,
 }) {
   return (
     <>
@@ -33,8 +34,10 @@ function CategorySidebarSection({
         content={section.listing}
         title={section.title + (section.listing?.length ? "" : " [none]")}
         makeIcon={makeSolvedIcon}
+        makeText={(v, idx) => <Typography>{v.name}</Typography>}
         makeTarget={(v) => v.uri}
-        inset
+        divide
+        sx={{ width: "100%", ...sx }}
       />
       {showInsertButton ? (
         <ListItemButton
@@ -99,10 +102,12 @@ export default function PracticeRouteScaffold() {
         display='flex'
         flexDirection='row'
         gap='20px'
-        paddingLeft='10vw'>
+        paddingLeft='10vw'
+        maxHeight='90vh'
+        sx={{ overflowY: "auto" }}>
         <Sidebar
+          elevation={6}
           width='15vw'
-          maxHeight='90vh'
           fontSize='15px'>
           {sections.map((section, idx) => {
             return (
@@ -111,6 +116,7 @@ export default function PracticeRouteScaffold() {
                 section={section}
                 currentURI={currentCategory.uri}
                 key={`collapsing:${section.name}`}
+                sx={{ width: "100%" }}
               />
             );
           })}
@@ -182,5 +188,5 @@ export {
 export {
   default as ExerciseCreationPage,
   action as exerciseCreationAction,
-  exerciseDeletionAction,
-} from "./createExercise";
+} from "./ExerciseCreationPage";
+export { default as ExerciseUpdatePage } from "./ExerciseUpdatePage";

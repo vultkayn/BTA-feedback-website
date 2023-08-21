@@ -1,5 +1,6 @@
 import React from "react";
 import "./styles/Sidebar.css";
+import { styled } from "@mui/material/styles";
 
 import { Link } from "react-router-dom";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -13,16 +14,27 @@ import {
   ListItemButton,
   ListItemText,
   ListItemIcon,
+  ListItem,
   Divider,
   Chip,
 } from "@mui/material";
+
+const InnerBadge = styled((props) => {
+  const { offsetX, offsetY, ...other } = props;
+  return <Badge {...other} />;
+})(({ theme, offsetX, offsetY }) => ({
+  transform: `translate(${offsetX ?? "-2px"}, ${offsetY ?? "2px"})`,
+}));
 
 export const makeSolvedIcon = (v, idx) => {
   const { solved } = v;
   return solved ? (
     <ListItemIcon sx={{ minWidth: "min-content" }}>
       {" "}
-      <CheckCircleIcon fontSize="small" htmlColor='green' />
+      <CheckCircleIcon
+        fontSize='small'
+        htmlColor='green'
+      />
     </ListItemIcon>
   ) : null;
 };
@@ -36,10 +48,7 @@ export default function Sidebar({
 }) {
   const props = {
     height: "100%",
-    flexGrow: "auto",
-    paddingtop: "10px",
-    paddingbot: "10px",
-    overflow: "scroll",
+    padding: "10px",
     scrollbarwidth: "thin",
     ...BoxProps,
   };
@@ -61,15 +70,53 @@ export default function Sidebar({
   );
 }
 
+function CollapsingSidebarItem({
+  onClick = (e, idx) => {},
+  target = "",
+  text = "",
+  icon = null,
+  showIcon = true,
+  ...ListButtonProps
+}) {
+  const item = (
+    <ListItem disablePadding>
+      <ListItemButton
+        component={Link}
+        onClick={onClick}
+        to={target}
+        {...ListButtonProps}>
+        <ListItemText
+          primary={text}
+          className='SidebarListing-item'
+        />
+      </ListItemButton>
+    </ListItem>
+  );
+
+  if (showIcon)
+    return (
+      <Badge
+        badgeContent={icon}
+        sx={{ width: "inherit" }}
+        offsetX="-10px"
+        offsetY="10px"
+        >
+        {item}
+      </Badge>
+    );
+  else return item;
+}
+
 export function CollapsingSidebarSection({
   title = "",
   divide = true,
-  addTarget = "",
+  variant = "outlined",
   content = [],
   onClick = (e, idx) => {},
   makeTarget = (v, idx) => v.name,
   makeText = (v, idx) => v.name,
   makeIcon = (v, idx) => {},
+  showIcon = true,
   disableRouting = false,
   inset = false,
   ...ListProps
@@ -86,7 +133,6 @@ export function CollapsingSidebarSection({
   return (
     <List
       className='Sidebar-content SidebarListing'
-      style={{ overflow: "auto" }}
       {...ListProps}>
       {divide ? (
         <Divider variant='middle'>
@@ -101,33 +147,33 @@ export function CollapsingSidebarSection({
           ) : null}
         </Divider>
       ) : null}
-      <Collapse in={opened}>
+      <Collapse
+        in={opened}
+        timeout='auto'>
         {content.map((v, idx) => {
-          const text = makeText(v, idx);
-          const target = makeTarget(v, idx);
-
           return (
-            <Badge key={`${target}-${idx}`} badgeContent={makeIcon(v, idx)}>
-            <ListItemButton
-              component={Link}
-              selected={selectedIndex === idx}
-              sx={{ justifyContent: "space-between" }}
-              onClick={(e) => handleClick(e, idx)}
-              to={target}
-              reloadDocument={disableRouting}>
-              <ListItemText
-                primary={text}
-                className='SidebarListing-item'
-                inset={inset}
-                sx={{ overflow: "clip" }}
+            <>
+              {idx > 0 && variant === "outlined" && (
+                <Divider
+                  variant='middle'
+                  flexItem
+                />
+              )}
+              <CollapsingSidebarItem
+                key={`item-${idx}`}
+                icon={makeIcon(v, idx)}
+                showIcon={showIcon}
+                text={makeText(v, idx)}
+                selected={selectedIndex === idx}
+                onClick={(e) => handleClick(e, idx)}
+                target={makeTarget(v, idx)}
+                reloadDocument={disableRouting}
+                sx={{ justifyContent: "space-between", width: "100%" }}
               />
-              {/* {makeIcon(v, idx)} */}
-            </ListItemButton>
-            </Badge>
+            </>
           );
         })}
       </Collapse>
-
     </List>
   );
 }

@@ -30,7 +30,7 @@ async function findSectionDocs(
   switch (sectionName) {
     case "subcategories":
       section = lean
-        ? await Category.find({ route: subRoute }).lean({ virtuals: true })
+        ? await Category.find({ route: subRoute }).lean({ virtuals: true, getters: true })
         : await Category.find({ route: subRoute }).exec();
       break;
     case "exercises":
@@ -40,8 +40,8 @@ async function findSectionDocs(
         );
       section = lean
         ? await Exercise.find({ category: category._id }).lean({
-            virtuals: true,
-          })
+            virtuals: true, getters: true
+          }).populate("category")
         : await Exercise.find({ category: category._id }).exec();
       break;
     default:
@@ -234,7 +234,7 @@ exports.index = async (req, res) => {
  *
  * REQUESTS
  *  PARAMETERS
- *   :uri | The category to insert the exercise into.
+ *   :uri | The category fetch.
  *
  * RESPONSE
  *  name | User-friendly name of the created Category
