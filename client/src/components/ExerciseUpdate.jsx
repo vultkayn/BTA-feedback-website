@@ -77,7 +77,7 @@ const QuestionFormCard = forwardRef(function QuestionFormCard(
     qidx,
     question,
     setQuestion = () => {},
-    onTouch = (e, { content, idx }) => {},
+    onTouch = (idx) => async (e) => {},
     ...FormCardProps
   },
   ref
@@ -111,25 +111,15 @@ const QuestionFormCard = forwardRef(function QuestionFormCard(
 
   const choices = question?.choices;
 
-/*   React.useEffect(() => {
-    let list = choices?.list;
-    if (!list) return;
-    let last = list[list.length - 1];
-    if (last.label && last.name) {
-      list.push({ name: undefined, label: undefined, answer: false });
-      setQuestion({ ...question, choices: { ...choices, list } }, qidx);
-    }
-  }, [choices, question, setQuestion]); */
-
   const setChoices = (choices) => {
     setQuestion({ ...question, choices }, qidx);
   };
 
   const onChange = (param) => (e) => {
-    let q = {...question};
+    let q = { ...question };
     q[param] = e.target.value;
     setQuestion(q);
-  }
+  };
 
   let choicesList =
     choices?.list &&
@@ -156,7 +146,7 @@ const QuestionFormCard = forwardRef(function QuestionFormCard(
             list[idx].name = e.target.value;
             setChoices({ ...choices, list: list });
           }}
-          onTouch={(e) => onTouch(e, { question, idx: qidx })}
+          onTouch={onTouch(qidx)}
         />
       );
     });
@@ -178,7 +168,7 @@ const QuestionFormCard = forwardRef(function QuestionFormCard(
           validator={validators.length(1, 20)}
           name={`title[${qidx}]`}
           fullWidth
-          onFocus={(e) => onTouch(e, { question, idx: qidx })}
+          onFocus={onTouch(qidx)}
         />
         <ValidatedInput
           margin='normal'
@@ -188,7 +178,7 @@ const QuestionFormCard = forwardRef(function QuestionFormCard(
           name={`statement[${qidx}]`}
           onChange={onChange("statement")}
           fullWidth
-          onFocus={(e) => onTouch(e, { question, idx: qidx })}
+          onFocus={onTouch(qidx)}
         />
       </Box>
       <ValidatedInput
@@ -201,7 +191,7 @@ const QuestionFormCard = forwardRef(function QuestionFormCard(
         minRows={4}
         multiline
         fullWidth
-        onFocus={(e) => onTouch(e, { question, idx: qidx })}
+        onFocus={onTouch(qidx)}
       />
       <Divider variant='middle'>
         <Chip
@@ -268,7 +258,7 @@ const QuestionFormCard = forwardRef(function QuestionFormCard(
               }
             })()}
             onChange={(e, newValue) => {
-              if(!choices.list) return;
+              if (!choices.list) return;
               let list = [...choices.list];
               for (let c of list) c.answer = false;
               list[parseInt(newValue)].answer = true;
@@ -293,20 +283,32 @@ export function QuestionAddingList({
   onFocusOut = async () => {},
 }) {
   const [focusedQuestion, setFocusedQuestion] = useState(-1);
+  const [changed, setChanged] = useState([]);
 
   const handleClickAway = (idx) => async (e) => {
+    console.log("clickaway", idx);
     if (focusedQuestion === idx) {
-      const error = await onFocusOut(questions[idx]);
+      const error = await onFocusOut(idx);
       if (error == null) setFocusedQuestion(-2);
     }
   };
 
   const setQuestion = (question, idx) => {
     if (idx === -1) return setLastQuestion(question);
-    let newQ = [...questions]
+    let newQ = [...questions];
     newQ[idx] = question;
+    if (!changed.includes(idx)) setChanged(changed.concat([idx]));
     setQuestions(newQ);
-  }
+  };
+
+  const handleTouch = (idx) => async (e) => {
+    e.stopPropagation();
+    if (focusedQuestion !== idx) {
+      setFocusedQuestion(idx);
+      if (focusedQuestion !== -1 && changed.includes(focusedQuestion))
+        await onFocusOut(focusedQuestion);
+    }
+  };
 
   return (
     <Box
@@ -332,10 +334,7 @@ export function QuestionAddingList({
               onClickAway={handleClickAway(idx)}>
               <QuestionFormCard
                 qidx={idx}
-                onTouch={(e) => {
-                  e.stopPropagation();
-                  setFocusedQuestion(idx);
-                }}
+                onTouch={handleTouch}
                 onDeleteAction={onDrop(idx)}
                 focused={focusedQuestion === idx}
                 question={q}
@@ -348,7 +347,7 @@ export function QuestionAddingList({
         <ClickAwayListener onClickAway={handleClickAway(-1)}>
           <QuestionFormCard
             qidx={-1}
-            onTouch={(e) => {
+            onTouch={(idx) => (e) => {
               e.stopPropagation();
               setFocusedQuestion(-1);
             }}

@@ -28,6 +28,28 @@ const createQuestion = async (question, { params }) => {
   }
 };
 
+const updateQuestion = async (question, { params }) => {
+  if (!Array.isArray(question?.choices?.list)) return;
+  if (!question?.title) return;
+  if (!question?.statement) return;
+  if (!question?.explanation) return;
+  let lastChoice = question.choices.list[question.choices.list.length - 1];
+  if (!lastChoice.label || !lastChoice.name)
+    question.choices.list.splice(question.choices.list.length - 1, 1);
+  try {
+    if (process.env.DEBUG != null) console.debug("Updating Question", question);
+    await axios.request({
+      method: "put",
+      url: `/api/practice/category/${params.uri}/ex/${params.uriName}/q/${params.qid}`,
+      data: question,
+    });
+  } catch (error) {
+    if (process.env.DEBUG != null)
+      console.debug("QuestionUpdate failed with", error.response.data);
+    throw error;
+  }
+};
+
 export default function QuestionUpdater() {
   let context = useOutletContext();
   const params = useParams();
@@ -52,8 +74,6 @@ export default function QuestionUpdater() {
 
   const handleDrop = (idx) => async (e) => {
     if (idx === -1) return setLastQuestion({});
-    console.log("dropping", idx);
-    console.log("questions are", questions);
     if (idx < 0) throw new Error("invalid question idx");
     let question = questions[idx];
     if (question?._id == null) throw new Error("question must have _id");
@@ -68,11 +88,26 @@ export default function QuestionUpdater() {
       let newQ = [...questions];
       newQ[idx] = q;
       setQuestions(newQ);
-      return;
     }
   };
 
-  const handleClickAway = (question) => async (e) => {};
+  const handleClickAway = (idx) => async (e) => {
+    console.log("handleclcikaway", idx)
+    if (idx === -1) return setLastQuestion({});
+    if (idx < 0) throw new Error("invalid question idx");
+    let question = questions[idx];
+    if (question?._id == null) throw new Error("question must have _id");
+
+    try {
+      await updateQuestion({params: {...params, qid: question._id}})
+    } catch (error) {
+      let q = { ...question };
+      q.errors = error.response?.errors ?? null;
+      let newQ = [...questions];
+      newQ[idx] = q;
+      setQuestions(newQ);
+    }
+  };
 
   return (
     <QuestionAddingList

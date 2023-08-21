@@ -6,14 +6,28 @@ import {
   Typography,
   FormControl,
   Button,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  ButtonGroup,
+  FormGroup,
+  Checkbox,
 } from "@mui/material";
 import Sidebar, {
   CollapsingSidebarSection,
   makeSolvedIcon,
 } from "../../components/Sidebar";
-import { useLoaderData, redirect, Link, Outlet, useOutletContext } from "react-router-dom";
+import {
+  useLoaderData,
+  redirect,
+  Link,
+  Outlet,
+  useOutletContext,
+} from "react-router-dom";
 import axios from "../../bridge/bridge";
 import useAuth from "../../bridge/authUtilities";
+import { CheckBox } from "@mui/icons-material";
+import CardListCard from "../../components/CardListCard";
 
 export const exerciseLoader = async ({ params }) => {
   try {
@@ -89,8 +103,7 @@ export const questionDeletionAction = async function ({ params }) {
   }
 };
 
-
-export function ExerciseProvider () {
+export function ExerciseProvider() {
   const loaderData = useLoaderData();
   const [exercise, setExercise] = useState({});
   useEffect(() => {
@@ -114,16 +127,60 @@ export function ExerciseProvider () {
     }
   }, [loaderData, setExercise]);
 
-  return <Outlet context={{exercise}} />
+  return <Outlet context={{ exercise }} />;
 }
 
 function produceQContent(question) {
   const produceCheckbox = () => {
-    return question.choices.list.map(({ name, label }) => {});
+    return (
+      <FormGroup
+        sx={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "center",
+          flexWrap: "wrap",
+          gap: 2,
+        }}>
+        {question.choices.list.map(({ name, label }) => {
+          return (
+            <FormControlLabel
+              key={name}
+              value={name}
+              control={<Checkbox />}
+              label={label}
+            />
+          );
+        })}
+      </FormGroup>
+    );
   };
 
   const produceRadio = () => {
-    return question.choices.list.map(({ name, label }) => {});
+    return (
+      <RadioGroup
+        sx={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "center",
+          flexWrap: "wrap",
+          gap: 2,
+        }}
+        row
+        defaultValue={question.choices.list[0].name}>
+        {question.choices.list.map(({ name, label }) => {
+          return (
+            <FormControlLabel
+              key={name}
+              value={name}
+              control={<Radio />}
+              label={label}
+            />
+          );
+        })}
+      </RadioGroup>
+    );
   };
 
   const format = question.choices.format;
@@ -139,26 +196,39 @@ function produceQContent(question) {
   return producer();
 }
 
-function QuestionCard({ question, index }) {
+function QuestionCard({ question, index, ...CardListCardProps }) {
+  const displayDispatcher = ({ kind, data }) => {
+    switch (kind) {
+      case "body":
+        return produceQContent(question);
+      case "resume":
+        return (
+          <>
+            <Typography
+              variant='h4'
+              gutterBottom>
+              {`#${index + 1} ${question.title}`}
+            </Typography>
+            <Typography variant='body2'>{question.statement}</Typography>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <Card
+    <CardListCard
       id={`q-${index}`}
-      sx={{ width: "min(70%, 70vw)" }}>
-      <CardContent>
-        <Typography
-          variant='h4'
-          gutterBottom>
-          {`#${index + 1} ${question.title}`}
-        </Typography>
-        <Typography variant='body2'>{question.statement}</Typography>
-        {produceQContent(question)}
-      </CardContent>
-    </Card>
+      data={question}
+      displayDispatcher={displayDispatcher}
+      {...CardListCardProps}
+    />
   );
 }
 
 export default function ExercisePage() {
-  const {exercise} = useOutletContext();
+  const { exercise } = useOutletContext();
   const { loggedIn } = useAuth();
   console.debug("Exercise is", exercise);
 
@@ -175,10 +245,9 @@ export default function ExercisePage() {
       display='flex'
       width='100%'
       flexDirection='row'
-
       gap='20px'
       marginBottom='40px'>
-        <Box width="100%">
+      <Box width='100%'>
         <Box
           flexDirection='row'
           display='flex'
@@ -187,8 +256,13 @@ export default function ExercisePage() {
             gutterBottom
             mb={10}
             align='left'
-            variant='h3'>
+            variant='h3'
+            paragraph>
             {exercise?.name}
+            <Typography variant='subtitle1'>
+              {exercise?.lastModified &&
+                `The ${new Date(exercise.lastModified).toLocaleDateString()}`}
+            </Typography>
           </Typography>
           {loggedIn ? (
             <Button
@@ -199,7 +273,8 @@ export default function ExercisePage() {
                 marginRight: "5vw",
                 height: "min-content",
               }}
-              variant='contained' color="secondary">
+              variant='contained'
+              color='secondary'>
               <Typography variant='button'>Update Exercise</Typography>
             </Button>
           ) : null}
@@ -227,43 +302,44 @@ export default function ExercisePage() {
                     key={q._id}
                     question={q}
                     index={idx}
+                    sx={{ width: "min(70%, 70vw)" }}
                   />
                 );
               })}
           </Box>
-          </Box>
-        </Box>
-        <Box
-          width='min(15%, 10vw)'
-          display='flex'
-          flexDirection='column'
-          alignItems='center'
-          gap='20px'>
-          <FormControl>
-            <Button
-              type='submit'
-              color='error'
-              variant='outlined'>
-              Reset
-            </Button>
-          </FormControl>
-          <Sidebar
-            variant='outlined'
-            width='100%'
-            maxHeight='60vh'
-            fontSize='15px'
-            className='scrolling-area scroll-right'>
-            <CollapsingSidebarSection
-              divide={false}
-              makeIcon={makeSolvedIcon}
-              onClick={handleClickSidebar}
-              makeText={(v, idx) => `Question ${idx + 1}`}
-              makeTarget={(v, idx) => `#q-${idx}`}
-              content={exercise?.questionsIDs}
-              disableRouting={true}
-            />
-          </Sidebar>
         </Box>
       </Box>
+      <Box
+        width='min(15%, 10vw)'
+        display='flex'
+        flexDirection='column'
+        alignItems='center'
+        gap='20px'>
+        <FormControl>
+          <Button
+            type='submit'
+            color='error'
+            variant='outlined'>
+            Reset
+          </Button>
+        </FormControl>
+        <Sidebar
+          variant='outlined'
+          width='100%'
+          maxHeight='60vh'
+          fontSize='15px'
+          className='scrolling-area scroll-right'>
+          <CollapsingSidebarSection
+            divide={false}
+            makeIcon={makeSolvedIcon}
+            onClick={handleClickSidebar}
+            makeText={(v, idx) => `Question ${idx + 1}`}
+            makeTarget={(v, idx) => `#q-${idx}`}
+            content={exercise?.questionsIDs}
+            disableRouting={true}
+          />
+        </Sidebar>
+      </Box>
+    </Box>
   );
 }
