@@ -63,8 +63,11 @@ export function SectionResponsiveCard({
 function toDeleteReducer(toDelete, action) {
   switch (action.type) {
     case "delete":
-      return toDelete.concat(action.obj);
+      if (!toDelete?.filter((obj) => obj.uri === action.obj.uri)?.length)
+        return toDelete.concat(action.obj);
+      return toDelete;
     case "cancel":
+      console.log("cancel: delete is", toDelete, "action is", action);
       return toDelete.filter((obj) => obj.uri !== action.obj.uri);
     case "touch":
       return [];
@@ -79,7 +82,6 @@ export default function SectionCardList({
   section,
   setSection,
   PaperProps = {},
-  onDelete = (obj, section) => {},
   addDeleteListener = false,
   draggable = false,
   onDragStart = (e, section, sectionObj) => {},
@@ -101,11 +103,8 @@ export default function SectionCardList({
 
   useEffect(() => {
     if (deleteAll) {
-      const saveDeletion = async (e) => {
-        e.preventDefault();
+      const saveDeletion = async () => {
         const deleting = toDelete;
-        onDelete(toDelete);
-        dispatch({ type: "deleteAll" });
         await Promise.all(
           deleting.map((sectionObj) => {
             if (isCategoriesSection(section))
@@ -122,10 +121,25 @@ export default function SectionCardList({
           })
         );
       };
-      saveDeletion();
+      if (toDelete?.length) {
+        saveDeletion();
+        let newObjs = [];
+        let deleteURIS = toDelete.map((v) => v.uri);
+        for (const obj of section?.listing ?? []) {
+          if (!deleteURIS.includes(obj.uri)) newObjs.push(obj);
+        }
+        setSection({ ...section, listing: newObjs });
+        dispatch({ type: "deleteAll" });
+      }
       setDeleteAll(false);
     }
-  }, [dispatch, section, toDelete, deleteAll, onDelete]);
+  }, [dispatch, section, toDelete, deleteAll, setSection]);
+
+  useEffect(() => {
+    if (!toDelete?.length) setDeleteAll(false);
+  }, [toDelete]);
+
+  console.log("toDelet is", toDelete);
 
   return (
     <Paper
@@ -150,7 +164,7 @@ export default function SectionCardList({
         <Typography variant='h4'>{section.title}</Typography>
         {addDeleteListener && toDelete.length ? (
           <Button
-            onClick={setDeleteAll(true)}
+            onClick={(e) => setDeleteAll(true)}
             color='error'
             variant='outlined'
             startIcon={<DeleteIcon />}>
@@ -175,12 +189,12 @@ export default function SectionCardList({
             <SectionResponsiveCard
               key={`card${idx}`}
               addDeleteListener={addDeleteListener}
-              onDelete={(e, sectionObj) =>
-                dispatch({ type: "delete", obj: sectionObj })
-              }
-              onDeleteCancel={(e, sectionObj) =>
-                dispatch({ type: "cancel", obj: sectionObj })
-              }
+              onDelete={(sectionObj) => {
+                return dispatch({ type: "delete", obj: sectionObj });
+              }}
+              onDeleteCancel={(sectionObj) => {
+                return dispatch({ type: "cancel", obj: sectionObj });
+              }}
               onTouch={handleTouch}
               sectionObj={sectionObj}
               dense

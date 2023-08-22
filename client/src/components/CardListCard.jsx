@@ -34,8 +34,8 @@ export default function CardListCard({
   immediateDelete = false,
   interactive = true,
   onTouch = (event, data) => {},
-  onDeleteCancel = (event, data) => {},
-  onDelete = (event, data) => {},
+  onDeleteCancel = ( data) => {},
+  onDelete = ( data) => {},
   dense = false,
   sx = {},
   ...CardProps
@@ -54,10 +54,10 @@ export default function CardListCard({
           onClick={(e) => {
             if (markedDelete) {
               setMarkedDelete(false);
-              onDeleteCancel(e, data);
+              onDeleteCancel(data);
             } else {
-              if (!immediateDelete) setMarkedDelete(true);
-              onDelete(e, data);
+              if (!immediateDelete && !markedDelete) setMarkedDelete(true);
+              onDelete(data);
             }
           }}>
           {!markedDelete ? (
