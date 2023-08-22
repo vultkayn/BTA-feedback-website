@@ -38,6 +38,7 @@ export default function CardListCard({
   onDelete = (event, data) => {},
   dense = false,
   sx = {},
+  ...CardProps
 }) {
   const [expanded, setExpanded] = React.useState(false);
   const [markedDelete, setMarkedDelete] = React.useState(false);
@@ -82,7 +83,7 @@ export default function CardListCard({
       sx={{
         width: "min(100%, 70vw)",
         ...sx,
-      }}>
+      }} {...CardProps}>
       {interactive ? (
         <CardContent
           sx={{

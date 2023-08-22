@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useFetcher, useNavigate } from "react-router-dom";
+import { useFetcher, useNavigate, useParams } from "react-router-dom";
 import {
   Box,
   Button,
@@ -15,6 +15,9 @@ import {
 } from "../common/dataFormatting";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ResponsiveFunction from "./ResponsiveFunctions";
+import { categoryDeletionAction } from "../routes/practice/createCategory";
+import { exerciseDeletionAction } from "../routes/practice/exercise";
+import axios from "../bridge/bridge";
 
 export function SectionResponsiveCard({
   fetcherData,
@@ -22,14 +25,6 @@ export function SectionResponsiveCard({
   addDeleteListener = false,
   ...CardListCardProps
 }) {
-  /*   const fetcher = useFetcher();
-  useEffect(() => {
-    if (fetcher.state === "idle" && !fetcher.data) {
-      console.debug ("attempt to load", "/practice/" + sectionObj.uri + "?index");
-      fetcher.load("/practice/" + sectionObj.uri + "?index");
-    }
-  }, [fetcher, sectionObj]); */
-
   const displayDispatcher = ({ kind, data }) => {
     switch (kind) {
       case "body":
@@ -59,55 +54,78 @@ export function SectionResponsiveCard({
     <CardListCard
       data={sectionObj}
       displayDispatcher={displayDispatcher}
+      addDeleteListener={addDeleteListener}
       {...CardListCardProps}
     />
   );
 }
 
+function toDeleteReducer(toDelete, action) {
+  switch (action.type) {
+    case "delete":
+      return toDelete.concat(action.obj);
+    case "cancel":
+      return toDelete.filter((obj) => obj.uri !== action.obj.uri);
+    case "touch":
+      return [];
+    case "deleteAll":
+      return [];
+    default:
+      break;
+  }
+}
+
 export default function SectionCardList({
   section,
+  setSection,
   PaperProps = {},
+  onDelete = (obj, section) => {},
   addDeleteListener = false,
+  draggable = false,
+  onDragStart = (e, section, sectionObj) => {},
+  onDragEnd = (e, section, sectionObj) => {},
+  onDragOver = (e, section, sectionObj) => {},
+  onDragEnter = (e, section, sectionObj) => {},
   sx,
   ...CardListCardProps
 }) {
   const navigate = useNavigate();
-  const [toDelete, setToDelete] = React.useState([]);
-
-  const deleteFetcher = useFetcher();
-  const handleCardDelete = (event, sectionObj) => {
-    event.preventDefault();
-    setToDelete(toDelete.concat(sectionObj));
-  };
-
-  const handleDeleteCancel = (event, sectionObj) => {
-    event.preventDefault();
-    setToDelete(toDelete.filter((obj) => obj.uri !== sectionObj.uri));
-  };
+  const [toDelete, dispatch] = React.useReducer(toDeleteReducer, []);
+  const [deleteAll, setDeleteAll] = React.useState(false);
 
   const handleTouch = (event, sectionObj) => {
     event.preventDefault();
-    setToDelete([]);
+    dispatch({ type: "touch" });
     navigate("/practice/" + sectionObj.uri);
   };
 
-  const saveDeletion = (e) => {
-    e.preventDefault();
-    const deleting = toDelete;
-    setToDelete([]);
-    for (const sectionObj of deleting) {
-      if (isCategoriesSection(section))
-        deleteFetcher.submit(`/practice/${sectionObj.uri}/@delete`, {
-          method: "delete",
-        });
-      else if (isExercisesSection(section)) {
-        const { route, uriName } = breakdownURI(sectionObj.uri, "/");
-        deleteFetcher.submit(`/practice/${route}/${uriName}/@delete`, {
-          method: "delete",
-        });
-      }
+  useEffect(() => {
+    if (deleteAll) {
+      const saveDeletion = async (e) => {
+        e.preventDefault();
+        const deleting = toDelete;
+        onDelete(toDelete);
+        dispatch({ type: "deleteAll" });
+        await Promise.all(
+          deleting.map((sectionObj) => {
+            if (isCategoriesSection(section))
+              return categoryDeletionAction({
+                params: { uri: sectionObj.uri },
+              });
+            else if (isExercisesSection(section)) {
+              const { route, uriName } = breakdownURI(sectionObj.uri, "/");
+              return exerciseDeletionAction({
+                params: { uri: route, uriName },
+              });
+            }
+            return Promise.resolve();
+          })
+        );
+      };
+      saveDeletion();
+      setDeleteAll(false);
     }
-  };
+  }, [dispatch, section, toDelete, deleteAll, onDelete]);
 
   return (
     <Paper
@@ -132,7 +150,7 @@ export default function SectionCardList({
         <Typography variant='h4'>{section.title}</Typography>
         {addDeleteListener && toDelete.length ? (
           <Button
-            onClick={saveDeletion}
+            onClick={setDeleteAll(true)}
             color='error'
             variant='outlined'
             startIcon={<DeleteIcon />}>
@@ -150,18 +168,27 @@ export default function SectionCardList({
                   "attempt to load",
                   "/practice/" + sectionObj.uri + "?index"
                 );
-                console.log("Attempt to fetch sectionObj", sectionObj)
+                console.log("Attempt to fetch sectionObj", sectionObj);
                 fetcher.load("/practice/" + sectionObj.uri + "?index");
               }
             }}>
             <SectionResponsiveCard
               key={`card${idx}`}
               addDeleteListener={addDeleteListener}
-              onDelete={handleCardDelete}
-              onDeleteCancel={handleDeleteCancel}
+              onDelete={(e, sectionObj) =>
+                dispatch({ type: "delete", obj: sectionObj })
+              }
+              onDeleteCancel={(e, sectionObj) =>
+                dispatch({ type: "cancel", obj: sectionObj })
+              }
               onTouch={handleTouch}
               sectionObj={sectionObj}
               dense
+              draggable={draggable}
+              onDragStart={(e) => onDragStart(e, section, sectionObj)}
+              onDragEnter={(e) => onDragEnter(e, section, sectionObj)}
+              onDragEnd={(e) => onDragEnd(e, section, sectionObj)}
+              onDragOver={(e) => onDragOver(e, section, sectionObj)}
               {...CardListCardProps}
             />
           </ResponsiveFunction>

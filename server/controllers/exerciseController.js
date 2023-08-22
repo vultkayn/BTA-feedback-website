@@ -338,7 +338,7 @@ exports.update = [
     /* Retrieve user's id
        req.user.id should be coherent since checkAuth validation passed.  */
     updates.lastModifiedBy = req.user.id;
-    updates.lastModified = Date.now;
+    updates.lastModified = Date.now();
 
     const updateStatus = await Exercise.findOneAndUpdate(
       {
@@ -347,10 +347,8 @@ exports.update = [
       },
       updates
     ).exec();
-    if (!updateStatus.acknowledged)
+    if (!updateStatus)
       return res.status(400).json({ errors: "update failed" });
-    if (updateStatus.matchedCount === 0)
-      return res.status(404).json({ errors: "exercise not found" });
     return res.json({
       ...updates,
       category: newCategory._id,

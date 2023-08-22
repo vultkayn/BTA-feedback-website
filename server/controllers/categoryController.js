@@ -443,6 +443,7 @@ exports.delete = [
  * {
  *  name,
  *  route,
+ *  uri,
  *  description
  * }
  *
@@ -457,6 +458,7 @@ exports.update = [
 
   nameValidationChain(body("name").optional()),
   routeValidationChain(body("route").optional()),
+  routeValidationChain(body("uri").optional()),
   body("description").optional().escape(),
   validateSanitization,
 
@@ -464,6 +466,11 @@ exports.update = [
     const { route, uriName } = breakdownURI(req.params.uri);
     let updates = { route, uriName };
     if (req.body.description) updates.description = req.body.description;
+    if (req.body.uri) {
+      let brokedown = breakdownURI(req.body.uri);
+      updates.route = brokedown.route;
+      updates.uriName = brokedown.uriName;
+    }
     if (req.body.name) {
       updates.name = req.body.name;
       updates.uriName = makeURIName(updates.name);
